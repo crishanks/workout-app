@@ -1,0 +1,57 @@
+.app {
+  min-height: 100vh;
+  padding-bottom: 2rem;
+}
+
+.content {
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.day-title {
+  font-size: 1.3rem;
+  color: #ff4444;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-btn,
+.stats-btn {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+  line-height: 1;
+}
+
+.history-btn:active,
+.stats-btn:active {
+  background: #3a3a3a;
+}
+
+.exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .day-title {
+    font-size: 1.1rem;
+  }
+}

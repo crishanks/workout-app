@@ -1,0 +1,118 @@
+.round-complete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.round-complete-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  border: 2px solid #ff4444;
+  text-align: center;
+  max-width: 400px;
+}
+
+.round-complete-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  color: #fff;
+}
+
+.final-rating {
+  margin-bottom: 2rem;
+}
+
+.rating-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border: 4px solid;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+}
+
+.rating-grade {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rating-score {
+  font-size: 1rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.rating-label {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.round-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #0a0a0a;
+  border-radius: 8px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
+.summary-value {
+  color: #ff4444;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.start-next-btn {
+  background: #ff4444;
+  border: none;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.start-next-btn:active {
+  background: #cc3333;
+}
+
+.header {
+  background: #1a1a1a;
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 2px solid #ff4444;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.content {
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}

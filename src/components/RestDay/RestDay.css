@@ -1,0 +1,14 @@
+.rest-day {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.rest-day h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.rest-day p {
+  color: #888;
+  font-size: 1.1rem;
+}

@@ -1,0 +1,44 @@
+.exercise-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+}
+
+.exercise-header {
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.exercise-header:active {
+  background: #222;
+}
+
+.exercise-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.exercise-meta {
+  color: #ff4444;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.exercise-details {
+  border-top: 1px solid #2a2a2a;
+  padding: 1rem;
+  background: #151515;
+}
+
+@media (max-width: 600px) {
+  .exercise-header h3 {
+    font-size: 0.95rem;
+  }
+}
