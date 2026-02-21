@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Edit3 } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import './EditHistory.css';
 
@@ -164,7 +165,9 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
                                             <div className="session-exercises">
                                                 {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}
                                             </div>
-                                            <span className="edit-icon">✏️</span>
+                                            <span className="edit-icon">
+                                                <Edit3 size={18} />
+                                            </span>
                                         </div>
                                     ))}
                             </div>
