@@ -9,23 +9,36 @@ export const useHelpSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchHistory, setSearchHistory] = useState([]);
+  const [searchError, setSearchError] = useState(null);
 
   // Initialize Fuse.js for fuzzy search with optimized configuration
   const fuse = useMemo(() => {
-    const topics = getAllTopics();
-    return new Fuse(topics, {
-      keys: [
-        { name: 'title', weight: 2 },        // Highest weight for title matches
-        { name: 'keywords', weight: 1.5 },   // High weight for keyword matches
-        { name: 'content', weight: 1 }       // Standard weight for content matches
-      ],
-      threshold: 0.4,                        // Balance between fuzzy and exact matching
-      includeScore: true,                    // Include match score for ranking
-      includeMatches: true,                  // Include match positions for highlighting
-      minMatchCharLength: 2,                 // Minimum 2 characters to match
-      ignoreLocation: true,                  // Search entire string, not just beginning
-      findAllMatches: true                   // Find all matching patterns
-    });
+    try {
+      const topics = getAllTopics();
+      
+      if (!topics || topics.length === 0) {
+        console.warn('No topics available for search');
+        return null;
+      }
+      
+      return new Fuse(topics, {
+        keys: [
+          { name: 'title', weight: 2 },        // Highest weight for title matches
+          { name: 'keywords', weight: 1.5 },   // High weight for keyword matches
+          { name: 'content', weight: 1 }       // Standard weight for content matches
+        ],
+        threshold: 0.4,                        // Balance between fuzzy and exact matching
+        includeScore: true,                    // Include match score for ranking
+        includeMatches: true,                  // Include match positions for highlighting
+        minMatchCharLength: 2,                 // Minimum 2 characters to match
+        ignoreLocation: true,                  // Search entire string, not just beginning
+        findAllMatches: true                   // Find all matching patterns
+      });
+    } catch (error) {
+      console.error('Failed to initialize search:', error);
+      setSearchError('Search initialization failed');
+      return null;
+    }
   }, []);
 
   // Load search history from localStorage on mount
@@ -81,40 +94,55 @@ export const useHelpSearch = () => {
 
   // Perform search with real-time filtering
   const searchResults = useMemo(() => {
-    let results = getAllTopics();
+    try {
+      let results = getAllTopics();
 
-    // Apply category filter first
-    if (selectedCategory && selectedCategory !== 'all') {
-      results = results.filter(topic => topic.categoryId === selectedCategory);
+      if (!results || results.length === 0) {
+        return [];
+      }
+
+      // Apply category filter first
+      if (selectedCategory && selectedCategory !== 'all') {
+        results = results.filter(topic => topic.categoryId === selectedCategory);
+      }
+
+      // Apply search query with fuzzy matching
+      if (searchQuery.trim() && fuse) {
+        const fuseResults = fuse.search(searchQuery);
+        const searchedTopicIds = fuseResults.map(result => result.item.id);
+        
+        // Filter results to match search, maintaining category filter
+        results = results.filter(topic => searchedTopicIds.includes(topic.id));
+        
+        // Sort by relevance score (lower score = better match)
+        results.sort((a, b) => {
+          const scoreA = fuseResults.find(r => r.item.id === a.id)?.score || 1;
+          const scoreB = fuseResults.find(r => r.item.id === b.id)?.score || 1;
+          return scoreA - scoreB;
+        });
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError('Search failed');
+      return [];
     }
-
-    // Apply search query with fuzzy matching
-    if (searchQuery.trim()) {
-      const fuseResults = fuse.search(searchQuery);
-      const searchedTopicIds = fuseResults.map(result => result.item.id);
-      
-      // Filter results to match search, maintaining category filter
-      results = results.filter(topic => searchedTopicIds.includes(topic.id));
-      
-      // Sort by relevance score (lower score = better match)
-      results.sort((a, b) => {
-        const scoreA = fuseResults.find(r => r.item.id === a.id)?.score || 1;
-        const scoreB = fuseResults.find(r => r.item.id === b.id)?.score || 1;
-        return scoreA - scoreB;
-      });
-    }
-
-    return results;
   }, [searchQuery, selectedCategory, fuse]);
 
   // Get match highlights for a specific topic
   const getHighlights = (topicId) => {
-    if (!searchQuery.trim()) return [];
-    
-    const fuseResults = fuse.search(searchQuery);
-    const result = fuseResults.find(r => r.item.id === topicId);
-    
-    return result?.matches || [];
+    try {
+      if (!searchQuery.trim() || !fuse) return [];
+      
+      const fuseResults = fuse.search(searchQuery);
+      const result = fuseResults.find(r => r.item.id === topicId);
+      
+      return result?.matches || [];
+    } catch (error) {
+      console.error('Highlight error:', error);
+      return [];
+    }
   };
 
   // Highlight search terms in text
@@ -196,6 +224,7 @@ export const useHelpSearch = () => {
     searchResults,
     selectedCategory,
     searchHistory,
+    searchError,
     hasNoResults,
     showingAllTopics,
     handleSearchChange,

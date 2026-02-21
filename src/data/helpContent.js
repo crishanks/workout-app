@@ -275,19 +275,63 @@ export const helpContent = {
 
 // Flatten all topics for easier searching
 export const getAllTopics = () => {
-  return helpContent.categories.flatMap(category => category.topics);
+  try {
+    if (!helpContent || !helpContent.categories || !Array.isArray(helpContent.categories)) {
+      console.error('Invalid help content structure');
+      return [];
+    }
+    
+    const topics = helpContent.categories.flatMap(category => {
+      if (!category.topics || !Array.isArray(category.topics)) {
+        console.warn(`Category ${category.id} has invalid topics`);
+        return [];
+      }
+      return category.topics;
+    });
+    
+    return topics;
+  } catch (error) {
+    console.error('Error getting all topics:', error);
+    return [];
+  }
 };
 
 // Get topics by category
 export const getTopicsByCategory = (categoryId) => {
-  if (!categoryId || categoryId === 'all') {
-    return getAllTopics();
+  try {
+    if (!categoryId || categoryId === 'all') {
+      return getAllTopics();
+    }
+    
+    if (!helpContent || !helpContent.categories) {
+      return [];
+    }
+    
+    const category = helpContent.categories.find(cat => cat.id === categoryId);
+    
+    if (!category || !category.topics || !Array.isArray(category.topics)) {
+      console.warn(`Category ${categoryId} not found or has invalid topics`);
+      return [];
+    }
+    
+    return category.topics;
+  } catch (error) {
+    console.error('Error getting topics by category:', error);
+    return [];
   }
-  const category = helpContent.categories.find(cat => cat.id === categoryId);
-  return category ? category.topics : [];
 };
 
 // Get topic by ID
 export const getTopicById = (topicId) => {
-  return getAllTopics().find(topic => topic.id === topicId);
+  try {
+    if (!topicId) {
+      return null;
+    }
+    
+    const allTopics = getAllTopics();
+    return allTopics.find(topic => topic.id === topicId) || null;
+  } catch (error) {
+    console.error('Error getting topic by ID:', error);
+    return null;
+  }
 };
