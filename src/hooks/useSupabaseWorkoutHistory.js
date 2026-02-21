@@ -1,28 +1,25 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getBrowserFingerprint } from '../utils/browserFingerprint';
 
 export const useSupabaseWorkoutHistory = () => {
     const [workoutHistory, setWorkoutHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
 
-    // Get or create anonymous user ID
+    // Get browser fingerprint as user ID (no localStorage)
     useEffect(() => {
-        let id = localStorage.getItem('supabase_user_id');
-        if (!id) {
-            id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            localStorage.setItem('supabase_user_id', id);
-        }
+        const id = getBrowserFingerprint();
         setUserId(id);
+        console.log('Using browser fingerprint as user ID:', id);
     }, []);
 
-    // Load workout history from Supabase and migrate localStorage data
+    // Load workout history from Supabase only
     useEffect(() => {
         if (!userId) return;
 
         const loadHistory = async () => {
             try {
-                // Load from Supabase
                 const { data, error } = await supabase
                     .from('workout_sessions')
                     .select('*')
@@ -31,54 +28,15 @@ export const useSupabaseWorkoutHistory = () => {
 
                 if (error) throw error;
 
-                // Check for localStorage data to migrate
-                const localData = localStorage.getItem('shreddit-history');
-                if (localData && (!data || data.length === 0)) {
-                    const localHistory = JSON.parse(localData);
-
-                    // Migrate to Supabase
-                    if (localHistory.length > 0) {
-                        const migratedSessions = localHistory.map(session => ({
-                            user_id: userId,
-                            day: session.day,
-                            date: session.date.split('T')[0],
-                            week: session.week,
-                            round: session.round || 1,
-                            timestamp: session.timestamp,
-                            exercises: session.exercises
-                        }));
-
-                        const { error: insertError } = await supabase
-                            .from('workout_sessions')
-                            .insert(migratedSessions);
-
-                        if (!insertError) {
-                            console.log('Successfully migrated localStorage data to Supabase');
-                            // Reload data
-                            const { data: newData } = await supabase
-                                .from('workout_sessions')
-                                .select('*')
-                                .eq('user_id', userId)
-                                .order('timestamp', { ascending: false });
-
-                            setWorkoutHistory(newData || []);
-                        }
-                    }
-                } else {
-                    setWorkoutHistory(data || []);
-                }
-
-                // Keep localStorage as backup
-                if (data) {
-                    localStorage.setItem('shreddit-history', JSON.stringify(data));
-                }
+                // Add sessionKey to loaded data
+                const enrichedData = (data || []).map(session => ({
+                    ...session,
+                    sessionKey: `${session.day}-${new Date(session.date).toLocaleDateString()}`
+                }));
+                setWorkoutHistory(enrichedData);
             } catch (error) {
                 console.error('Error loading workout history:', error);
-                // Fallback to localStorage
-                const localData = localStorage.getItem('shreddit-history');
-                if (localData) {
-                    setWorkoutHistory(JSON.parse(localData));
-                }
+                setWorkoutHistory([]);
             } finally {
                 setLoading(false);
             }
@@ -179,15 +137,13 @@ export const useSupabaseWorkoutHistory = () => {
                 : [session, ...workoutHistory];
 
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         } catch (error) {
             console.error('Error saving to Supabase:', error);
-            // Fallback to localStorage only
+            // Just update local state, no localStorage fallback
             const updatedHistory = session.id
                 ? workoutHistory.map(s => s.id === session.id ? session : s)
                 : [session, ...workoutHistory];
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         }
     };
 
@@ -245,13 +201,11 @@ export const useSupabaseWorkoutHistory = () => {
 
             const updatedHistory = workoutHistory.filter(w => w.round !== round);
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         } catch (error) {
             console.error('Error clearing round data:', error);
-            // Fallback to localStorage
+            // Just update local state, no localStorage fallback
             const updatedHistory = workoutHistory.filter(w => w.round !== round);
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         }
     };
 
@@ -278,15 +232,13 @@ export const useSupabaseWorkoutHistory = () => {
             );
 
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         } catch (error) {
             console.error('Error updating session:', error);
-            // Fallback to localStorage
+            // Just update local state, no localStorage fallback
             const updatedHistory = workoutHistory.map(s =>
                 s.sessionKey === updatedSession.sessionKey ? updatedSession : s
             );
             setWorkoutHistory(updatedHistory);
-            localStorage.setItem('shreddit-history', JSON.stringify(updatedHistory));
         }
     };
 

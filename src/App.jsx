@@ -186,7 +186,9 @@ function App() {
                       const absoluteWeek = (currentRound - 1) * 12 + currentWeek;
                       logSet(dayName, absoluteWeek, currentRound, name, setIdx, weight, reps);
                     }}
-                    getCurrentLog={(name, setIdx) => getCurrentLog(dayName, name, setIdx)}
+                    getCurrentLog={(name, setIdx) => {
+                      return getCurrentLog(dayName, name, setIdx);
+                    }}
                   />
                 );
               })}

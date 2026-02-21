@@ -1,18 +1,63 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { getBrowserFingerprint } from '../utils/browserFingerprint';
 
 export const useRoundManager = () => {
     const [roundData, setRoundData] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [loading, setLoading] = useState(true);
 
+    // Get browser fingerprint as user ID
     useEffect(() => {
-        const saved = localStorage.getItem('shreddit-round');
-        if (saved) {
-            setRoundData(JSON.parse(saved));
-        }
+        const id = getBrowserFingerprint();
+        setUserId(id);
     }, []);
 
-    const saveRoundData = (data) => {
+    // Load round data from Supabase
+    useEffect(() => {
+        if (!userId) return;
+
+        const loadRoundData = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('round_data')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
+                if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+
+                setRoundData(data);
+            } catch (error) {
+                console.error('Error loading round data:', error);
+                setRoundData(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadRoundData();
+    }, [userId]);
+
+    const saveRoundData = async (data) => {
+        if (!userId) return;
+
         setRoundData(data);
-        localStorage.setItem('shreddit-round', JSON.stringify(data));
+
+        try {
+            const { error } = await supabase
+                .from('round_data')
+                .upsert({
+                    user_id: userId,
+                    ...data
+                }, {
+                    onConflict: 'user_id'
+                });
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving round data:', error);
+        }
     };
 
     const startRound = (roundNumber) => {

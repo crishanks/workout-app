@@ -3,6 +3,7 @@ import { SearchBar } from './SearchBar';
 import { CategoryList } from './CategoryList';
 import { TopicCard } from './TopicCard';
 import { ErrorBoundary } from './ErrorBoundary';
+import { UserIdManager } from '../UserIdManager/UserIdManager';
 import { helpContent, getTopicById } from '../../data/helpContent';
 import { useHelpSearch } from '../../hooks/useHelpSearch';
 import './HelpSection.css';
@@ -121,6 +122,8 @@ export const HelpSection = ({ isOpen, onClose }) => {
             placeholder="Search help topics..."
           />
         </div>
+        
+        <UserIdManager />
         
         <div className="help-category-container">
           <CategoryList
