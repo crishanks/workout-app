@@ -20,25 +20,30 @@
 
 .day-title {
   font-size: 1.3rem;
-  color: var(--text-primary);
+  color: #000000;
   font-weight: 700;
 }
 
 .header-actions {
   display: flex;
   gap: 0.5rem;
-  background: var(--bg-tertiary);
+  background: var(--accent-primary);
   padding: 0.4rem;
   border-radius: 50px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  position: fixed;
+  bottom: 2rem;
+  right: 1rem;
+  z-index: 1000;
+  width: fit-content;
 }
 
 .history-btn,
 .stats-btn,
 .edit-btn {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
   width: 48px;
   height: 48px;
   padding: 0;
@@ -55,18 +60,18 @@
 .history-btn:active,
 .stats-btn:active,
 .edit-btn:active {
-  background: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.3);
   color: white;
   transform: scale(0.95);
-  border-color: var(--accent-primary);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .history-btn.active,
 .stats-btn.active,
 .edit-btn.active {
-  background: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.3);
   color: white;
-  border-color: var(--accent-primary);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .exercises {

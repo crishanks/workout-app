@@ -158,17 +158,6 @@ function App() {
           <>
             <div className="day-header">
               <h2 className="day-title">{day?.day}</h2>
-              <div className="header-actions">
-                <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
-                  <Clock size={22} strokeWidth={2} />
-                </button>
-                <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
-                  <TrendingUp size={22} strokeWidth={2} />
-                </button>
-                <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
-                  <Edit3 size={22} strokeWidth={2} />
-                </button>
-              </div>
             </div>
             <div className="exercises">
               {day?.exercises.map((exercise, idx) => {
@@ -198,6 +187,17 @@ function App() {
                   />
                 );
               })}
+            </div>
+            <div className="header-actions">
+              <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
+                <Clock size={22} strokeWidth={2} />
+              </button>
+              <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
+                <TrendingUp size={22} strokeWidth={2} />
+              </button>
+              <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
+                <Edit3 size={22} strokeWidth={2} />
+              </button>
             </div>
           </>
         )}
