@@ -40,7 +40,8 @@
 
 .history-btn,
 .stats-btn,
-.edit-btn {
+.edit-btn,
+.help-btn {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
@@ -59,14 +60,16 @@
 
 .history-btn:hover,
 .stats-btn:hover,
-.edit-btn:hover {
+.edit-btn:hover,
+.help-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: scale(1.05);
 }
 
 .history-btn:active,
 .stats-btn:active,
-.edit-btn:active {
+.edit-btn:active,
+.help-btn:active {
   background: rgba(255, 255, 255, 0.3);
   color: white;
   transform: scale(0.95);
@@ -75,7 +78,8 @@
 
 .history-btn.active,
 .stats-btn.active,
-.edit-btn.active {
+.edit-btn.active,
+.help-btn.active {
   background: rgba(255, 255, 255, 0.3);
   color: white;
   border-color: rgba(255, 255, 255, 0.4);

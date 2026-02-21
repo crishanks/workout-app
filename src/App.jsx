@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Edit3 } from 'lucide-react';
+import { Clock, TrendingUp, Edit3, HelpCircle } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -15,6 +15,7 @@ import { RoundStart } from './components/RoundStart/RoundStart';
 import { RoundComplete } from './components/RoundComplete/RoundComplete';
 import { EditHistory } from './components/EditHistory/EditHistory';
 import { Modal } from './components/Modal/Modal';
+import { HelpSection } from './components/HelpSection/HelpSection';
 import './App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [historyRound, setHistoryRound] = useState(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
@@ -198,10 +200,15 @@ function App() {
               <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
                 <Edit3 size={22} strokeWidth={2} />
               </button>
+              <button className="help-btn" onClick={() => setShowHelp(true)} title="Help & Reference">
+                <HelpCircle size={22} strokeWidth={2} />
+              </button>
             </div>
           </>
         )}
       </main>
+      
+      <HelpSection isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }
