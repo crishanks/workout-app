@@ -7,7 +7,7 @@ const MAX_HISTORY_ITEMS = 10;
 
 export const useHelpSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchHistory, setSearchHistory] = useState([]);
 
   // Initialize Fuse.js for fuzzy search with optimized configuration

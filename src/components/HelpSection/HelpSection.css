@@ -118,6 +118,33 @@
   font-size: 1rem;
 }
 
+.topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.no-results p {
+  margin: 0.5rem 0;
+}
+
+.no-results p:first-child {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.no-results-hint {
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+}
+
 /* Mobile optimization */
 @media (max-width: 768px) {
   .help-header h1 {
