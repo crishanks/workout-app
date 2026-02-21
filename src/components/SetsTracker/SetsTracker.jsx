@@ -31,14 +31,14 @@ export const SetsTracker = ({ sets, warmupSets = 0, warmupReps = [], repRange, e
   // Calculate progressive overload suggestion
   const getSuggestedWeightAndReps = (setIdx) => {
     if (!lastWorkout?.sets[setIdx]) return { weight: '', reps: '' };
-    
+
     const lastWeight = parseFloat(lastWorkout.sets[setIdx].weight);
     const lastReps = parseFloat(lastWorkout.sets[setIdx].reps);
-    
+
     if (!lastWeight || !lastReps) return { weight: lastWeight || '', reps: lastReps || '' };
 
     const { min, max } = parseRepRange(repRange);
-    
+
     // Check if ALL sets from last workout maxed out the rep range
     const allSetsMaxed = Object.values(lastWorkout.sets).every(set => {
       const reps = parseFloat(set.reps);
@@ -71,7 +71,7 @@ export const SetsTracker = ({ sets, warmupSets = 0, warmupReps = [], repRange, e
             const repsValue = defaultWarmupReps[setIdx] || "8";
             const percentage = warmupPercentages[setIdx] || 0.60;
             const calculatedWeight = workingWeight > 0 ? Math.round(workingWeight * percentage * 2) / 2 : '';
-            
+
             return (
               <div key={`warmup-${setIdx}`} className="set-row warmup-row">
                 <span className="set-label">W{setIdx + 1}</span>
@@ -84,13 +84,13 @@ export const SetsTracker = ({ sets, warmupSets = 0, warmupReps = [], repRange, e
           })}
         </div>
       )}
-      
+
       {sets > 0 && warmupSets > 0 && <div className="working-sets-header">Working Sets</div>}
-      
+
       {[...Array(sets)].map((_, setIdx) => {
         const log = getCurrentLog(exerciseName, setIdx);
         const suggestion = getSuggestedWeightAndReps(setIdx);
-        
+
         return (
           <div key={setIdx} className="set-row">
             <span className="set-label">Set {setIdx + 1}</span>

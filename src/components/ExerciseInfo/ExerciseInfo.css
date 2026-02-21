@@ -1,16 +1,18 @@
 .exercise-info {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .exercise-info p {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: #ccc;
 }
 
 .notes {
   color: #888;
   font-style: italic;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
