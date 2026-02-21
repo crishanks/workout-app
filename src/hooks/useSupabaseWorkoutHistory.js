@@ -81,8 +81,29 @@ export const useSupabaseWorkoutHistory = () => {
             );
         }
 
-        // Update set
-        exercise.sets[setIndex] = { weight: parseFloat(weight), reps: parseInt(reps) };
+        // Update set - handle empty values
+        const weightValue = weight === '' ? '' : parseFloat(weight);
+        const repsValue = reps === '' ? '' : parseInt(reps);
+        
+        // Only save if both values are present
+        if (weightValue !== '' && repsValue !== '') {
+            exercise.sets[setIndex] = { weight: weightValue, reps: repsValue };
+        } else if (weightValue !== '' || repsValue !== '') {
+            // Partial data - save what we have
+            exercise.sets[setIndex] = { 
+                weight: weightValue === '' ? '' : weightValue, 
+                reps: repsValue === '' ? '' : repsValue 
+            };
+        } else {
+            // Both empty - remove the set if it exists
+            if (exercise.sets[setIndex]) {
+                delete exercise.sets[setIndex];
+            }
+            // If no sets remain, don't save
+            if (Object.keys(exercise.sets).length === 0) {
+                return;
+            }
+        }
 
         try {
             // Check if session exists in database

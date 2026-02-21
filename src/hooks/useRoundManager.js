@@ -27,7 +27,17 @@ export const useRoundManager = () => {
 
                 if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
 
-                setRoundData(data);
+                // Convert snake_case to camelCase for app use
+                if (data) {
+                    setRoundData({
+                        round: data.round,
+                        startDate: data.start_date,
+                        endDate: data.end_date,
+                        isActive: data.is_active
+                    });
+                } else {
+                    setRoundData(null);
+                }
             } catch (error) {
                 console.error('Error loading round data:', error);
                 setRoundData(null);
@@ -45,14 +55,18 @@ export const useRoundManager = () => {
         setRoundData(data);
 
         try {
+            // Convert camelCase to snake_case for database
+            const dbData = {
+                user_id: userId,
+                round: data.round,
+                start_date: data.startDate,
+                end_date: data.endDate,
+                is_active: data.isActive
+            };
+
             const { error } = await supabase
                 .from('round_data')
-                .upsert({
-                    user_id: userId,
-                    ...data
-                }, {
-                    onConflict: 'user_id'
-                });
+                .upsert(dbData);
 
             if (error) throw error;
         } catch (error) {

@@ -1,7 +1,7 @@
 -- Migration to add round_data and exercise_variants tables
 
 -- Table for storing round data (replaces localStorage 'shreddit-round')
-CREATE TABLE IF NOT EXISTS round_data (
+CREATE TABLE IF NOT EXISTS public.round_data (
   user_id TEXT PRIMARY KEY,
   round INTEGER NOT NULL,
   start_date TIMESTAMPTZ,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS round_data (
 );
 
 -- Table for storing exercise variant selections (replaces localStorage 'shreddit-variants')
-CREATE TABLE IF NOT EXISTS exercise_variants (
+CREATE TABLE IF NOT EXISTS public.exercise_variants (
   user_id TEXT PRIMARY KEY,
   variants JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -20,31 +20,33 @@ CREATE TABLE IF NOT EXISTS exercise_variants (
 );
 
 -- Enable Row Level Security
-ALTER TABLE round_data ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exercise_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.round_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exercise_variants ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow all operations on round_data" ON public.round_data;
+DROP POLICY IF EXISTS "Allow all operations on exercise_variants" ON public.exercise_variants;
 
 -- Create policies to allow all operations (since we're using anonymous user IDs)
-CREATE POLICY "Allow all operations on round_data" ON round_data
+CREATE POLICY "Allow all operations on round_data" ON public.round_data
   FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Allow all operations on exercise_variants" ON exercise_variants
+CREATE POLICY "Allow all operations on exercise_variants" ON public.exercise_variants
   FOR ALL USING (true) WITH CHECK (true);
 
 -- Add indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_round_data_user_id ON round_data(user_id);
-CREATE INDEX IF NOT EXISTS idx_exercise_variants_user_id ON exercise_variants(user_id);
+CREATE INDEX IF NOT EXISTS idx_round_data_user_id ON public.round_data(user_id);
+CREATE INDEX IF NOT EXISTS idx_exercise_variants_user_id ON public.exercise_variants(user_id);
 
--- Note: workout_sessions table should already exist from previous setup
--- If not, create it with:
--- CREATE TABLE IF NOT EXISTS workout_sessions (
---   id BIGSERIAL PRIMARY KEY,
---   user_id TEXT NOT NULL,
---   day TEXT NOT NULL,
---   date DATE NOT NULL,
---   week INTEGER NOT NULL,
---   round INTEGER NOT NULL DEFAULT 1,
---   timestamp TIMESTAMPTZ NOT NULL,
---   exercises JSONB NOT NULL,
---   created_at TIMESTAMPTZ DEFAULT NOW(),
---   updated_at TIMESTAMPTZ DEFAULT NOW()
--- );
+-- Verify tables were created
+SELECT 'round_data table created' as status WHERE EXISTS (
+  SELECT FROM information_schema.tables 
+  WHERE table_schema = 'public' 
+  AND table_name = 'round_data'
+);
+
+SELECT 'exercise_variants table created' as status WHERE EXISTS (
+  SELECT FROM information_schema.tables 
+  WHERE table_schema = 'public' 
+  AND table_name = 'exercise_variants'
+);
