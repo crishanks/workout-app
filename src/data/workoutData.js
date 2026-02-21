@@ -63,8 +63,7 @@ const createWeek = (weekNum, block, modifications = {}) => {
                     { name: "Machine Hip Abduction", sets: weekNum >= 9 ? 3 : 2, reps: weekNum >= 6 ? "12-15" : "10-12", earlyRPE: weekNum === 1 ? "7-8" : "8-9", lastRPE: weekNum === 1 ? "8-9" : "10", rest: "1-2 min", notes: "If possible, use pads to increase the range of motion on the machine.", sub1: "Cable Hip Abduction", sub2: "Lateral Band Walk" },
                     { name: "Standing Calf Raise", sets: weekNum >= 9 ? 3 : 2, reps: weekNum >= 6 ? "12-15" : "10-12", earlyRPE: weekNum === 1 ? "7-8" : "8-9", lastRPE: weekNum === 1 ? "8-9" : "10", rest: "1-2 min", notes: "1-2 second pause at the bottom of each rep.", sub1: "Seated Calf Raise", sub2: "Leg Press Calf Press" }
                 ]
-            },
-            { day: "Rest Day", exercises: [] }
+            }
         ]
     };
 
