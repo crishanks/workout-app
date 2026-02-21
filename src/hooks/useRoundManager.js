@@ -152,6 +152,7 @@ export const useRoundManager = () => {
 
     return {
         roundData,
+        loading,
         startRound,
         restartCurrentRound,
         endRound,

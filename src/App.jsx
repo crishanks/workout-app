@@ -37,6 +37,7 @@ function App() {
   const currentWeek = roundManager.getCurrentWeekInRound();
   const hasActiveRound = roundManager.hasActiveRound();
   const isComplete = roundManager.isRoundComplete();
+  const roundLoading = roundManager.loading;
 
   const programWeek = currentWeek ? ((currentWeek - 1) % 12) + 1 : 1;
   const week = workoutProgram.weeks.find(w => w.week === programWeek);
@@ -87,6 +88,17 @@ function App() {
     roundManager.restartCurrentRound();
     setShowRestartModal(false);
   };
+
+  // Show loading state while round data is being fetched
+  if (roundLoading || loading) {
+    return (
+      <div className="app">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasActiveRound) {
     return <RoundStart roundNumber={currentRound || 1} onStart={handleStartRound} />;
