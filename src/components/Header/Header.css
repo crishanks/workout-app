@@ -40,6 +40,12 @@ header.header h1 {
   box-shadow: var(--shadow-sm);
 }
 
+.restart-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  transform: scale(1.05);
+}
+
 .restart-btn:active {
   background: var(--accent-secondary);
   color: white;

@@ -57,6 +57,13 @@
   justify-content: center;
 }
 
+.history-btn:hover,
+.stats-btn:hover,
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
 .history-btn:active,
 .stats-btn:active,
 .edit-btn:active {

@@ -57,6 +57,11 @@
   color: var(--text-primary);
 }
 
+.modal-cancel:hover {
+  background: #3a3a3a;
+  border-color: #3a3a3a;
+}
+
 .modal-cancel:active {
   background: var(--bg-primary);
   transform: scale(0.98);
@@ -66,6 +71,11 @@
   background: var(--accent-primary);
   border: 1px solid var(--accent-primary);
   color: white;
+}
+
+.modal-confirm:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
 }
 
 .modal-confirm:active {

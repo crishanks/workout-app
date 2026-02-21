@@ -29,6 +29,11 @@
   transition: all 0.2s;
 }
 
+.back-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
 .back-btn:active {
   background: var(--accent-secondary);
   transform: scale(0.98);
@@ -124,6 +129,12 @@
   font-size: 0.9rem;
   transition: all 0.2s;
   font-weight: 500;
+}
+
+.round-chip:hover {
+  background: #3a3a3a;
+  color: white;
+  border-color: #3a3a3a;
 }
 
 .round-chip.active {

@@ -175,6 +175,11 @@
   transition: all 0.2s;
 }
 
+.save-changes-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
 .save-changes-btn:active {
   background: var(--accent-secondary);
   transform: scale(0.98);

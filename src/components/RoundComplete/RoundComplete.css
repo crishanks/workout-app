@@ -96,6 +96,11 @@
   width: 100%;
 }
 
+.start-next-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
 .start-next-btn:active {
   background: var(--accent-secondary);
   transform: scale(0.98);

@@ -21,6 +21,13 @@
   box-shadow: var(--shadow-sm);
 }
 
+.variant-chip:hover {
+  background: #3a3a3a;
+  color: white;
+  border-color: #3a3a3a;
+  transform: translateY(-1px);
+}
+
 .variant-chip.active {
   background: var(--accent-primary);
   color: white;
