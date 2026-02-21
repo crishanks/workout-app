@@ -1,0 +1,136 @@
+.topic-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  margin-bottom: 0.75rem;
+}
+
+.topic-card.expanded {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  border-color: var(--accent-primary);
+}
+
+.topic-header {
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--bg-tertiary);
+  transition: all 0.2s;
+}
+
+.topic-header.expanded {
+  background: var(--accent-primary);
+}
+
+.topic-header:active {
+  transform: scale(0.98);
+}
+
+.topic-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.topic-header.expanded h3 {
+  color: white;
+}
+
+.expand-icon {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-left: 0.5rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.topic-header.expanded .expand-icon {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.topic-details {
+  border-top: 1px solid var(--border-color);
+  padding: 1rem;
+  background: var(--bg-secondary);
+}
+
+.topic-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.topic-content p {
+  margin: 0 0 0.75rem 0;
+}
+
+.topic-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Search term highlighting */
+.highlight {
+  background-color: rgba(250, 204, 21, 0.4);
+  color: var(--text-primary);
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+/* Related topics section */
+.related-topics {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.related-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.related-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.related-chip {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.related-chip:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.related-chip:active {
+  transform: translateY(0);
+}
