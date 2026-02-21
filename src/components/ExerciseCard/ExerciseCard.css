@@ -2,13 +2,14 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s;
 }
 
 .exercise-card.expanded {
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  border-color: var(--accent-primary);
 }
 
 .exercise-header {
@@ -19,7 +20,7 @@
   align-items: center;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  background: #2a2a2a;
+  background: var(--bg-tertiary);
   transition: all 0.2s;
 }
 
@@ -36,19 +37,23 @@
   font-weight: 600;
   flex: 1;
   line-height: 1.4;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .exercise-meta {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
   margin-left: 0.5rem;
 }
 
+.exercise-header.expanded .exercise-meta {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .exercise-details {
   border-top: 1px solid var(--border-color);
   padding: 1rem;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
 }

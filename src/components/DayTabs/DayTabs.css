@@ -1,9 +1,9 @@
 .day-tabs {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   overflow-x: auto;
   background: var(--bg-secondary);
-  padding: 0.5rem;
+  padding: 20px 0px;
   gap: 0.5rem;
   position: sticky;
   top: 78px;
@@ -18,9 +18,9 @@
 }
 
 .day-tab {
-  background: #2a2a2a;
-  border: none;
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   padding: 0.65rem 1rem;
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -29,14 +29,15 @@
   font-weight: 500;
   transition: all 0.2s;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-sm);
 }
 
 .day-tab.active {
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
   transform: translateY(-1px);
 }
 

@@ -6,12 +6,12 @@ export const RoundComplete = ({ roundNumber, stats, onStartNext }) => {
   return (
     <div className="app">
       <header className="header">
-        <h1>💪 Shreddit</h1>
+        <h1>Shreddit</h1>
       </header>
       <main className="content">
         <div className="round-complete">
           <div className="round-complete-card">
-            <h2>🎉 Round {roundNumber} Complete!</h2>
+            <h2>Round {roundNumber} Complete!</h2>
             
             <div className="final-rating">
               <div className="rating-badge" style={{ borderColor: rating.color }}>

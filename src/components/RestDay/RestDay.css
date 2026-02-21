@@ -6,9 +6,11 @@
 .rest-day h2 {
   font-size: 2rem;
   margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .rest-day p {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }

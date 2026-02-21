@@ -8,7 +8,7 @@ export const WorkoutHistory = ({ dayName, rounds, selectedRound, onRoundSelect, 
   return (
     <div className="app">
       <header className="header">
-        <h1>💪 Shreddit</h1>
+        <h1>Shreddit</h1>
         <button className="back-btn" onClick={onBack}>← Back</button>
       </header>
       <main className="content">

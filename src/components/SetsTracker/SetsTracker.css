@@ -19,8 +19,8 @@
 
 .weight-input,
 .reps-input {
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 0.75rem;
   border-radius: var(--radius-sm);
@@ -35,7 +35,7 @@
 .reps-input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 input[type="number"]::-webkit-inner-spin-button,

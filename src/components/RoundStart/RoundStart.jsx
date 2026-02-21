@@ -4,7 +4,7 @@ export const RoundStart = ({ roundNumber, onStart }) => {
   return (
     <div className="app">
       <header className="header">
-        <h1>💪 Shreddit</h1>
+        <h1>Shreddit</h1>
       </header>
       <main className="content">
         <div className="round-start">
