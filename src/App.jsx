@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Edit3, HelpCircle } from 'lucide-react';
+import { Clock, TrendingUp, Edit3 } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -141,6 +141,7 @@ function App() {
         currentRound={currentRound}
         programWeek={programWeek}
         onRestart={() => setShowRestartModal(true)}
+        onHelpClick={() => setShowHelp(true)}
         canRestart={roundManager.canRestart()}
       />
       <DayTabs days={week?.days || []} currentDay={currentDay} onDayChange={setCurrentDay} />
@@ -199,9 +200,6 @@ function App() {
               </button>
               <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
                 <Edit3 size={22} strokeWidth={2} />
-              </button>
-              <button className="help-btn" onClick={() => setShowHelp(true)} title="Help & Reference">
-                <HelpCircle size={22} strokeWidth={2} />
               </button>
             </div>
           </>
