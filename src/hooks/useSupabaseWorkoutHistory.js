@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getBrowserFingerprint } from '../utils/browserFingerprint';
 
@@ -6,6 +6,7 @@ export const useSupabaseWorkoutHistory = () => {
     const [workoutHistory, setWorkoutHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
+    const saveTimeoutRef = useRef({});
 
     // Get browser fingerprint as user ID (no localStorage)
     useEffect(() => {
@@ -84,88 +85,104 @@ export const useSupabaseWorkoutHistory = () => {
         // Update set - handle empty values
         const weightValue = weight === '' ? '' : parseFloat(weight);
         const repsValue = reps === '' ? '' : parseInt(reps);
-        
+
         // Only save if both values are present
         if (weightValue !== '' && repsValue !== '') {
             exercise.sets[setIndex] = { weight: weightValue, reps: repsValue };
         } else if (weightValue !== '' || repsValue !== '') {
             // Partial data - save what we have
-            exercise.sets[setIndex] = { 
-                weight: weightValue === '' ? '' : weightValue, 
-                reps: repsValue === '' ? '' : repsValue 
+            exercise.sets[setIndex] = {
+                weight: weightValue === '' ? '' : weightValue,
+                reps: repsValue === '' ? '' : repsValue
             };
         } else {
             // Both empty - remove the set if it exists
             if (exercise.sets[setIndex]) {
                 delete exercise.sets[setIndex];
             }
-            // If no sets remain, don't save
+            // If no sets remain, don't save to DB yet
             if (Object.keys(exercise.sets).length === 0) {
+                // Update local state only
+                const updatedHistory = session.id
+                    ? workoutHistory.map(s => s.id === session.id ? session : s)
+                    : workoutHistory.some(s => s.sessionKey === sessionKey)
+                        ? workoutHistory.map(s => s.sessionKey === sessionKey ? session : s)
+                        : [session, ...workoutHistory];
+                setWorkoutHistory(updatedHistory);
                 return;
             }
         }
 
-        try {
-            // Check if session exists in database
-            const { data: existing } = await supabase
-                .from('workout_sessions')
-                .select('id')
-                .eq('user_id', userId)
-                .eq('day', dayName)
-                .eq('date', dateStr)
-                .eq('round', currentRound)
-                .maybeSingle();
+        // Update local state immediately for responsive UI
+        const updatedHistory = session.id
+            ? workoutHistory.map(s => (s.sessionKey === sessionKey || (s.id && s.id === session.id)) ? session : s)
+            : workoutHistory.some(s => s.sessionKey === sessionKey)
+                ? workoutHistory.map(s => s.sessionKey === sessionKey ? session : s)
+                : [session, ...workoutHistory];
+        setWorkoutHistory(updatedHistory);
 
-            if (existing) {
-                // Update existing session
-                const { error } = await supabase
+        // Debounce database save
+        const saveKey = `${sessionKey}-${exerciseName}-${setIndex}`;
+        if (saveTimeoutRef.current[saveKey]) {
+            clearTimeout(saveTimeoutRef.current[saveKey]);
+        }
+
+        saveTimeoutRef.current[saveKey] = setTimeout(async () => {
+            try {
+                // Check if session exists in database
+                const { data: existing } = await supabase
                     .from('workout_sessions')
-                    .update({
-                        exercises: session.exercises,
-                        timestamp: session.timestamp,
-                        week: currentWeek
-                    })
-                    .eq('id', existing.id);
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('day', dayName)
+                    .eq('date', dateStr)
+                    .eq('round', currentRound)
+                    .maybeSingle();
 
-                if (error) throw error;
+                if (existing) {
+                    // Update existing session
+                    const { error } = await supabase
+                        .from('workout_sessions')
+                        .update({
+                            exercises: session.exercises,
+                            timestamp: session.timestamp,
+                            week: currentWeek
+                        })
+                        .eq('id', existing.id);
 
-                session.id = existing.id;
-            } else {
-                // Insert new session
-                const { data: newSession, error } = await supabase
-                    .from('workout_sessions')
-                    .insert([{
-                        user_id: userId,
-                        day: dayName,
-                        date: dateStr,
-                        week: currentWeek,
-                        round: currentRound,
-                        timestamp: session.timestamp,
-                        exercises: session.exercises
-                    }])
-                    .select()
-                    .single();
+                    if (error) throw error;
 
-                if (error) throw error;
-                session.id = newSession.id;
+                    session.id = existing.id;
+                } else {
+                    // Insert new session
+                    const { data: newSession, error } = await supabase
+                        .from('workout_sessions')
+                        .insert([{
+                            user_id: userId,
+                            day: dayName,
+                            date: dateStr,
+                            week: currentWeek,
+                            round: currentRound,
+                            timestamp: session.timestamp,
+                            exercises: session.exercises
+                        }])
+                        .select()
+                        .single();
+
+                    if (error) throw error;
+                    session.id = newSession.id;
+
+                    // Update local state with the new ID
+                    setWorkoutHistory(prev => prev.map(s =>
+                        s.sessionKey === sessionKey ? { ...s, id: newSession.id } : s
+                    ));
+                }
+            } catch (error) {
+                console.error('Error saving to Supabase:', error);
             }
 
-            // Update local state
-            const updatedHistory = existing
-                ? workoutHistory.map(s =>
-                    (s.sessionKey === sessionKey || (s.id && s.id === existing.id)) ? session : s
-                )
-                : [session, ...workoutHistory];
-
-            setWorkoutHistory(updatedHistory);
-        } catch (error) {
-            console.error('Error saving to Supabase:', error);
-            // Just update local state, no localStorage fallback
-            const updatedHistory = session.id
-                ? workoutHistory.map(s => s.id === session.id ? session : s)
-                : [session, ...workoutHistory];
-            setWorkoutHistory(updatedHistory);
-        }
+            delete saveTimeoutRef.current[saveKey];
+        }, 500); // 500ms debounce
     };
 
     const getLastWorkout = (dayName, exerciseName) => {
