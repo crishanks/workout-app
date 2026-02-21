@@ -66,6 +66,15 @@
   transform: scale(0.98);
 }
 
+.help-search-container {
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 .help-content {
   flex: 1;
   overflow: hidden;
@@ -98,6 +107,10 @@
   .help-back-btn {
     padding: 0.4rem 0.8rem;
     font-size: 0.85rem;
+  }
+  
+  .help-search-container {
+    padding: 0.75rem;
   }
   
   .help-scroll-container {
