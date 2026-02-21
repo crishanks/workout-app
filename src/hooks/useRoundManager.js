@@ -52,7 +52,12 @@ export const useRoundManager = () => {
         if (!roundData?.isActive) return null;
 
         const startDate = new Date(roundData.startDate);
+        // Reset to start of day for consistent week boundaries
+        startDate.setHours(0, 0, 0, 0);
+
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
         const weekNumber = Math.floor(daysDiff / 7) + 1;
 
@@ -62,8 +67,16 @@ export const useRoundManager = () => {
     const isRoundComplete = () => {
         if (!roundData?.isActive) return false;
 
-        const weekNumber = getCurrentWeekInRound();
-        return weekNumber > 12;
+        const startDate = new Date(roundData.startDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+        // Round is complete after 84 days (12 weeks * 7 days)
+        return daysDiff >= 84;
     };
 
     const canRestart = () => {

@@ -16,7 +16,8 @@ export const useWorkoutHistory = () => {
   };
 
   const logSet = (dayName, currentWeek, currentRound, exerciseName, setIndex, weight, reps) => {
-    const sessionKey = `${dayName}-${new Date().toLocaleDateString()}`;
+    const today = new Date().toLocaleDateString();
+    const sessionKey = `${dayName}-${today}`;
     const existingSession = workoutHistory.find(s => s.sessionKey === sessionKey);
 
     if (existingSession) {
