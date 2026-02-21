@@ -25,7 +25,7 @@ function App() {
   const [historyRound, setHistoryRound] = useState(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession } = useWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, getLastPerformedExercise } = useWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const stats = useStats(workoutHistory);
   const roundManager = useRoundManager();
@@ -34,6 +34,34 @@ function App() {
   const currentWeek = roundManager.getCurrentWeekInRound();
   const hasActiveRound = roundManager.hasActiveRound();
   const isComplete = roundManager.isRoundComplete();
+
+  const programWeek = currentWeek ? ((currentWeek - 1) % 12) + 1 : 1;
+  const week = workoutProgram.weeks.find(w => w.week === programWeek);
+  const day = week?.days[currentDay];
+  const dayName = day?.day;
+
+  const getExerciseKey = (exerciseIdx) => `${dayName}-ex${exerciseIdx}`;
+
+  // Auto-select last performed exercise variants when day changes
+  useEffect(() => {
+    if (dayName && day?.exercises) {
+      const lastPerformed = getLastPerformedExercise(dayName);
+      if (lastPerformed) {
+        day.exercises.forEach((exercise, idx) => {
+          const exerciseKey = getExerciseKey(idx);
+          const variants = [exercise.name, exercise.sub1, exercise.sub2].filter(Boolean);
+          
+          // Find which variant was last performed
+          const lastVariantIdx = variants.findIndex(v => lastPerformed.includes(v));
+          
+          // Only set if we found a match and it's different from current
+          if (lastVariantIdx >= 0 && exerciseVariants[exerciseKey] !== lastVariantIdx) {
+            setExerciseVariant(exerciseKey, lastVariantIdx);
+          }
+        });
+      }
+    }
+  }, [dayName, currentDay]);
 
   // Reset expanded exercise when day changes
   useEffect(() => {
@@ -56,13 +84,6 @@ function App() {
     roundManager.restartCurrentRound();
     setShowRestartModal(false);
   };
-
-  const programWeek = currentWeek ? ((currentWeek - 1) % 12) + 1 : 1;
-  const week = workoutProgram.weeks.find(w => w.week === programWeek);
-  const day = week?.days[currentDay];
-  const dayName = day?.day;
-
-  const getExerciseKey = (exerciseIdx) => `${dayName}-ex${exerciseIdx}`;
 
   if (!hasActiveRound) {
     return <RoundStart roundNumber={currentRound || 1} onStart={handleStartRound} />;

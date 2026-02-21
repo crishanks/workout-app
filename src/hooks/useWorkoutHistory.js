@@ -113,6 +113,23 @@ export const useWorkoutHistory = () => {
     saveHistory(updatedHistory);
   };
 
+  const getLastPerformedExercise = (dayName, exerciseVariants) => {
+    // Get the most recent session for this day
+    const previousSessions = workoutHistory
+      .filter(s => s.day === dayName)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (previousSessions.length === 0) return null;
+
+    const lastSession = previousSessions[0];
+    
+    // Find which variant was actually performed
+    const performedExercises = lastSession.exercises.map(ex => ex.name);
+    
+    // Return the exercise names that were performed
+    return performedExercises;
+  };
+
   return {
     workoutHistory,
     logSet,
@@ -121,6 +138,7 @@ export const useWorkoutHistory = () => {
     getDayHistory,
     getAllRounds,
     clearRoundData,
-    updateSession
+    updateSession,
+    getLastPerformedExercise
   };
 };
