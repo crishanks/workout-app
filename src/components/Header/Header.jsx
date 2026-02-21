@@ -1,3 +1,4 @@
+import { RotateCcw } from 'lucide-react';
 import './Header.css';
 
 export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canRestart }) => {
@@ -7,7 +8,7 @@ export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canR
         <h1>Shreddit</h1>
         {canRestart && (
           <button className="restart-btn" onClick={onRestart} title="Restart Round">
-            ↻
+            <RotateCcw size={22} strokeWidth={2} />
           </button>
         )}
       </div>

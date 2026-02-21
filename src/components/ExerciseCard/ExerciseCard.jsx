@@ -20,8 +20,8 @@ export const ExerciseCard = ({
   const hasVariants = variants.length > 1;
 
   return (
-    <div className="exercise-card">
-      <div className="exercise-header" onClick={onToggle}>
+    <div className={`exercise-card ${isExpanded ? 'expanded' : ''}`}>
+      <div className={`exercise-header ${isExpanded ? 'expanded' : ''}`} onClick={onToggle}>
         <h3>{activeExerciseName}</h3>
         <span className="exercise-meta">
           {exercise.sets} × {exercise.reps}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Clock, TrendingUp, Edit3 } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useWorkoutHistory } from './hooks/useWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -159,13 +160,13 @@ function App() {
               <h2 className="day-title">{day?.day}</h2>
               <div className="header-actions">
                 <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
-                  📊
+                  <Clock size={22} strokeWidth={2} />
                 </button>
                 <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
-                  📈
+                  <TrendingUp size={22} strokeWidth={2} />
                 </button>
                 <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
-                  ✏️
+                  <Edit3 size={22} strokeWidth={2} />
                 </button>
               </div>
             </div>

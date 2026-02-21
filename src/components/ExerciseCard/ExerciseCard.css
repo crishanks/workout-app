@@ -2,9 +2,13 @@
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
+}
+
+.exercise-card.expanded {
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
 .exercise-header {
@@ -15,10 +19,16 @@
   align-items: center;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  background: #2a2a2a;
+  transition: all 0.2s;
+}
+
+.exercise-header.expanded {
+  background: var(--accent-primary);
 }
 
 .exercise-header:active {
-  background: var(--bg-tertiary);
+  transform: scale(0.98);
 }
 
 .exercise-header h3 {
@@ -26,11 +36,11 @@
   font-weight: 600;
   flex: 1;
   line-height: 1.4;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .exercise-meta {
-  color: var(--accent-primary);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
   font-size: 0.9rem;
   white-space: nowrap;
