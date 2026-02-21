@@ -9,6 +9,12 @@
   max-width: 800px;
   margin: 0 auto;
   background: white;
+  transition: padding-bottom 0.3s ease;
+}
+
+.content.has-expanded-exercise {
+  padding-bottom: 90px;
+  /* Add padding to clear floating buttons when accordion is open */
 }
 
 .day-header {

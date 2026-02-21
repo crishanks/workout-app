@@ -54,10 +54,10 @@ function App() {
         day.exercises.forEach((exercise, idx) => {
           const exerciseKey = getExerciseKey(idx);
           const variants = [exercise.name, exercise.sub1, exercise.sub2].filter(Boolean);
-          
+
           // Find which variant was last performed
           const lastVariantIdx = variants.findIndex(v => lastPerformed.includes(v));
-          
+
           // Only set if we found a match and it's different from current
           if (lastVariantIdx >= 0 && exerciseVariants[exerciseKey] !== lastVariantIdx) {
             setExerciseVariant(exerciseKey, lastVariantIdx);
@@ -106,19 +106,19 @@ function App() {
 
   if (isComplete) {
     return (
-      <RoundComplete 
-        roundNumber={currentRound} 
-        stats={stats} 
+      <RoundComplete
+        roundNumber={currentRound}
+        stats={stats}
         onStartNext={() => {
           roundManager.startRound(currentRound + 1);
-        }} 
+        }}
       />
     );
   }
 
   if (showEditHistory) {
     return (
-      <EditHistory 
+      <EditHistory
         workoutHistory={workoutHistory}
         onBack={() => setShowEditHistory(false)}
         onUpdateSession={updateSession}
@@ -133,23 +133,23 @@ function App() {
   if (showHistory) {
     const rounds = getAllRounds(dayName);
     return (
-      <WorkoutHistory 
-        dayName={dayName} 
+      <WorkoutHistory
+        dayName={dayName}
         rounds={rounds}
         selectedRound={historyRound}
         onRoundSelect={setHistoryRound}
         onBack={() => {
           setShowHistory(false);
           setHistoryRound(null);
-        }} 
+        }}
       />
     );
   }
 
   return (
     <div className="app">
-      <Header 
-        currentWeek={currentWeek} 
+      <Header
+        currentWeek={currentWeek}
         currentRound={currentRound}
         programWeek={programWeek}
         onRestart={() => setShowRestartModal(true)}
@@ -166,7 +166,7 @@ function App() {
         message={`This will restart Round ${currentRound} from Week 1. Your workout history will be preserved, but the timer will reset. Are you sure?`}
       />
 
-      <main className="content">
+      <main className={`content ${showExercise !== null ? 'has-expanded-exercise' : ''}`}>
         {day?.exercises.length === 0 ? (
           <RestDay />
         ) : (
@@ -219,7 +219,7 @@ function App() {
           </>
         )}
       </main>
-      
+
       <HelpSection isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
