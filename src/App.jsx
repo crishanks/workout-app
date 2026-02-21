@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, TrendingUp, Edit3 } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
-import { useWorkoutHistory } from './hooks/useWorkoutHistory';
+import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
 import { useStats } from './hooks/useStats';
 import { useRoundManager } from './hooks/useRoundManager';
@@ -26,7 +26,7 @@ function App() {
   const [historyRound, setHistoryRound] = useState(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, getLastPerformedExercise } = useWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const stats = useStats(workoutHistory);
   const roundManager = useRoundManager();
