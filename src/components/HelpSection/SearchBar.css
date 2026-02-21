@@ -61,6 +61,11 @@
   transform: scale(0.95);
 }
 
+.search-clear-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
 /* Search History Dropdown */
 .search-history-dropdown {
   position: absolute;

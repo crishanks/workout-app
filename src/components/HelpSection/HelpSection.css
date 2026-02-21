@@ -22,6 +22,11 @@
   }
 }
 
+/* Smooth scrolling for content area */
+.help-scroll-container {
+  scroll-behavior: smooth;
+}
+
 .help-header {
   background: var(--bg-secondary);
   padding: 1rem;
@@ -64,6 +69,11 @@
 .help-back-btn:active {
   background: var(--accent-secondary);
   transform: scale(0.98);
+}
+
+.help-back-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .help-search-container {
