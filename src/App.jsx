@@ -12,6 +12,7 @@ import { WorkoutHistory } from './components/WorkoutHistory/WorkoutHistory';
 import { Stats } from './components/Stats/Stats';
 import { RoundStart } from './components/RoundStart/RoundStart';
 import { RoundComplete } from './components/RoundComplete/RoundComplete';
+import { EditHistory } from './components/EditHistory/EditHistory';
 import { Modal } from './components/Modal/Modal';
 import './App.css';
 
@@ -20,10 +21,11 @@ function App() {
   const [showExercise, setShowExercise] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showEditHistory, setShowEditHistory] = useState(false);
   const [historyRound, setHistoryRound] = useState(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData } = useWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession } = useWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const stats = useStats(workoutHistory);
   const roundManager = useRoundManager();
@@ -78,6 +80,16 @@ function App() {
     );
   }
 
+  if (showEditHistory) {
+    return (
+      <EditHistory 
+        workoutHistory={workoutHistory}
+        onBack={() => setShowEditHistory(false)}
+        onUpdateSession={updateSession}
+      />
+    );
+  }
+
   if (showStats) {
     return <Stats stats={stats} onBack={() => setShowStats(false)} />;
   }
@@ -125,11 +137,14 @@ function App() {
             <div className="day-header">
               <h2 className="day-title">{day?.day}</h2>
               <div className="header-actions">
-                <button className="history-btn" onClick={() => setShowHistory(true)}>
+                <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
                   📊
                 </button>
-                <button className="stats-btn" onClick={() => setShowStats(true)}>
+                <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
                   📈
+                </button>
+                <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
+                  ✏️
                 </button>
               </div>
             </div>

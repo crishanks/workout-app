@@ -1,0 +1,168 @@
+.history-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-group {
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 0.75rem;
+  border: 1px solid #2a2a2a;
+}
+
+.group-header {
+  color: #ff4444;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.session-item {
+  background: #0a0a0a;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #2a2a2a;
+  transition: background 0.2s;
+}
+
+.session-item:active {
+  background: #151515;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.session-info strong {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.session-date {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.session-exercises {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-right: 0.5rem;
+}
+
+.edit-icon {
+  font-size: 1.2rem;
+}
+
+.edit-session-header {
+  background: #1a1a1a;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid #2a2a2a;
+}
+
+.edit-session-header h2 {
+  color: #ff4444;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.edit-session-header .session-date {
+  color: #ccc;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.session-meta {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.edit-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.edit-exercise-card {
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 0.75rem;
+  border: 1px solid #2a2a2a;
+}
+
+.edit-exercise-card h3 {
+  color: white;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.edit-sets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-set-row {
+  display: grid;
+  grid-template-columns: 45px 1fr 1fr;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.edit-set-row .set-label {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 600;
+}
+
+.edit-set-row input {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: white;
+  padding: 0.6rem 0.4rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.edit-set-row input:focus {
+  outline: none;
+  border-color: #ff4444;
+}
+
+.save-changes-btn {
+  width: 100%;
+  background: #ff4444;
+  border: none;
+  color: white;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-changes-btn:active {
+  background: #cc3333;
+}

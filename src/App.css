@@ -27,7 +27,8 @@
 }
 
 .history-btn,
-.stats-btn {
+.stats-btn,
+.edit-btn {
   background: #2a2a2a;
   border: 1px solid #3a3a3a;
   color: white;
@@ -40,7 +41,8 @@
 }
 
 .history-btn:active,
-.stats-btn:active {
+.stats-btn:active,
+.edit-btn:active {
   background: #3a3a3a;
 }
 

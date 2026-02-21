@@ -106,6 +106,13 @@ export const useWorkoutHistory = () => {
     saveHistory(filteredHistory);
   };
 
+  const updateSession = (updatedSession) => {
+    const updatedHistory = workoutHistory.map(session => 
+      session.sessionKey === updatedSession.sessionKey ? updatedSession : session
+    );
+    saveHistory(updatedHistory);
+  };
+
   return {
     workoutHistory,
     logSet,
@@ -113,6 +120,7 @@ export const useWorkoutHistory = () => {
     getCurrentLog,
     getDayHistory,
     getAllRounds,
-    clearRoundData
+    clearRoundData,
+    updateSession
   };
 };
