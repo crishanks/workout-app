@@ -97,15 +97,15 @@ export const SetsTracker = ({ sets, warmupSets = 0, warmupReps = [], repRange, e
             <input
               type="number"
               placeholder={suggestion.weight || 'lbs'}
-              value={log.weight}
-              onChange={(e) => onLogSet(exerciseName, setIdx, e.target.value, log.reps)}
+              value={log.weight ?? ''}
+              onChange={(e) => onLogSet(exerciseName, setIdx, e.target.value, log.reps ?? '')}
               className="weight-input"
             />
             <input
               type="number"
               placeholder={suggestion.reps || 'reps'}
-              value={log.reps}
-              onChange={(e) => onLogSet(exerciseName, setIdx, log.weight, e.target.value)}
+              value={log.reps ?? ''}
+              onChange={(e) => onLogSet(exerciseName, setIdx, log.weight ?? '', e.target.value)}
               className="reps-input"
             />
           </div>

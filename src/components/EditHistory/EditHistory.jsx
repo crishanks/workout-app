@@ -31,7 +31,14 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
         setSelectedSession(session);
         const sets = {};
         session.exercises.forEach(ex => {
-            sets[ex.name] = { ...ex.sets };
+            const exerciseSets = {};
+            Object.entries(ex.sets).forEach(([setIdx, set]) => {
+                exerciseSets[setIdx] = {
+                    weight: set.weight ?? '',
+                    reps: set.reps ?? ''
+                };
+            });
+            sets[ex.name] = exerciseSets;
         });
         setEditedSets(sets);
     };
@@ -112,14 +119,14 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
                                             </span>
                                             <input
                                                 type="number"
-                                                value={editedSets[exercise.name]?.[setIdx]?.weight || set.weight}
+                                                value={editedSets[exercise.name]?.[setIdx]?.weight ?? ''}
                                                 onChange={(e) => handleSetChange(exercise.name, setIdx, 'weight', e.target.value)}
                                                 className="weight-input"
                                                 placeholder="lbs"
                                             />
                                             <input
                                                 type="number"
-                                                value={editedSets[exercise.name]?.[setIdx]?.reps || set.reps}
+                                                value={editedSets[exercise.name]?.[setIdx]?.reps ?? ''}
                                                 onChange={(e) => handleSetChange(exercise.name, setIdx, 'reps', e.target.value)}
                                                 className="reps-input"
                                                 placeholder="reps"
