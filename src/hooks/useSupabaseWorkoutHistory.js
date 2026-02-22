@@ -8,6 +8,14 @@ export const useSupabaseWorkoutHistory = () => {
     const [userId, setUserId] = useState(null);
     const saveTimeoutRef = useRef({});
 
+    // Helper function to get local date in YYYY-MM-DD format (not UTC)
+    const getLocalDateString = (date = new Date()) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     // Get browser fingerprint as user ID (no localStorage)
     useEffect(() => {
         const id = getBrowserFingerprint();
@@ -30,10 +38,17 @@ export const useSupabaseWorkoutHistory = () => {
                 if (error) throw error;
 
                 // Add sessionKey to loaded data
-                const enrichedData = (data || []).map(session => ({
-                    ...session,
-                    sessionKey: `${session.day}-${new Date(session.date).toLocaleDateString()}`
-                }));
+                const enrichedData = (data || []).map(session => {
+                    // Handle both ISO datetime strings and date-only strings
+                    const dateStr = session.date.includes('T')
+                        ? session.date.split('T')[0]
+                        : session.date;
+                    const dateObj = new Date(dateStr + 'T12:00:00'); // Parse as noon local time
+                    return {
+                        ...session,
+                        sessionKey: `${session.day}-${dateObj.toLocaleDateString()}`
+                    };
+                });
                 setWorkoutHistory(enrichedData);
             } catch (error) {
                 console.error('Error loading workout history:', error);
@@ -51,19 +66,18 @@ export const useSupabaseWorkoutHistory = () => {
 
         const today = new Date().toLocaleDateString();
         const sessionKey = `${dayName}-${today}`;
+        const dateStr = getLocalDateString(); // Use local date, not UTC
 
         // Find existing session
         let session = workoutHistory.find(s => s.sessionKey === sessionKey ||
-            (s.day === dayName && s.date.split('T')[0] === new Date().toISOString().split('T')[0] && s.round === currentRound));
-
-        const dateStr = new Date().toISOString().split('T')[0];
+            (s.day === dayName && s.date === dateStr && s.round === currentRound));
 
         if (!session) {
             session = {
                 sessionKey,
                 user_id: userId,
                 day: dayName,
-                date: new Date().toISOString(),
+                date: dateStr, // Store as local date string
                 week: currentWeek,
                 round: currentRound,
                 timestamp: new Date().toISOString(),
@@ -198,10 +212,19 @@ export const useSupabaseWorkoutHistory = () => {
         return exercise || null;
     };
 
-    const getCurrentLog = (dayName, exerciseName, setIndex) => {
-        const sessionKey = `${dayName}-${new Date().toLocaleDateString()}`;
-        const session = workoutHistory.find(s => s.sessionKey === sessionKey ||
-            (s.day === dayName && s.date.split('T')[0] === new Date().toISOString().split('T')[0]));
+    const getCurrentLog = (dayName, exerciseName, setIndex, currentWeek, currentRound) => {
+        // Find the most recent session for this day in the current week and round
+        const currentWeekSessions = workoutHistory.filter(s =>
+            s.day === dayName &&
+            s.week === currentWeek &&
+            s.round === currentRound
+        ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (currentWeekSessions.length === 0) {
+            return { weight: '', reps: '' };
+        }
+
+        const session = currentWeekSessions[0];
         const exercise = session?.exercises.find(e => e.name === exerciseName);
         return exercise?.sets[setIndex] || { weight: '', reps: '' };
     };
@@ -280,6 +303,27 @@ export const useSupabaseWorkoutHistory = () => {
         }
     };
 
+    const deleteSession = async (sessionId) => {
+        if (!userId) return;
+
+        try {
+            const { error } = await supabase
+                .from('workout_sessions')
+                .delete()
+                .eq('id', sessionId);
+
+            if (error) throw error;
+
+            const updatedHistory = workoutHistory.filter(s => s.id !== sessionId);
+            setWorkoutHistory(updatedHistory);
+        } catch (error) {
+            console.error('Error deleting session:', error);
+            // Just update local state
+            const updatedHistory = workoutHistory.filter(s => s.id !== sessionId);
+            setWorkoutHistory(updatedHistory);
+        }
+    };
+
     const getLastPerformedExercise = (dayName) => {
         const today = new Date().toLocaleDateString();
         const previousSessions = workoutHistory
@@ -301,6 +345,7 @@ export const useSupabaseWorkoutHistory = () => {
         getAllRounds,
         clearRoundData,
         updateSession,
+        deleteSession,
         getLastPerformedExercise
     };
 };

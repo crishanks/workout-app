@@ -28,7 +28,7 @@ function App() {
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const stats = useStats(workoutHistory);
   const roundManager = useRoundManager();
@@ -122,6 +122,7 @@ function App() {
         workoutHistory={workoutHistory}
         onBack={() => setShowEditHistory(false)}
         onUpdateSession={updateSession}
+        onDeleteSession={deleteSession}
       />
     );
   }
@@ -199,7 +200,8 @@ function App() {
                       logSet(dayName, absoluteWeek, currentRound, name, setIdx, weight, reps);
                     }}
                     getCurrentLog={(name, setIdx) => {
-                      return getCurrentLog(dayName, name, setIdx);
+                      const absoluteWeek = (currentRound - 1) * 12 + currentWeek;
+                      return getCurrentLog(dayName, name, setIdx, absoluteWeek, currentRound);
                     }}
                   />
                 );

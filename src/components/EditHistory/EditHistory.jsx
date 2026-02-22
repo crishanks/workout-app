@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Edit3 } from 'lucide-react';
+import { Edit3, Trash2 } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import './EditHistory.css';
 
-export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
+export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteSession }) => {
     const [selectedSession, setSelectedSession] = useState(null);
     const [editedSets, setEditedSets] = useState({});
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [sessionToDelete, setSessionToDelete] = useState(null);
 
     const groupedSessions = workoutHistory.reduce((acc, session) => {
         const round = session.round || 1;
@@ -75,6 +77,20 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
         setShowConfirmModal(false);
         setSelectedSession(null);
         setEditedSets({});
+    };
+
+    const handleDeleteClick = (session, e) => {
+        e.stopPropagation(); // Prevent opening edit view
+        setSessionToDelete(session);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (sessionToDelete) {
+            onDeleteSession(sessionToDelete.id);
+            setShowDeleteModal(false);
+            setSessionToDelete(null);
+        }
     };
 
     if (selectedSession) {
@@ -153,6 +169,14 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
                 <button className="back-btn" onClick={onBack}>← Back</button>
             </header>
 
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Workout?"
+                message={`This will permanently delete the ${sessionToDelete?.day} workout from ${sessionToDelete ? new Date(sessionToDelete.date).toLocaleDateString() : ''}. This cannot be undone.`}
+            />
+
             <main className="content">
                 <div className="history-groups">
                     {sortedGroups.map(([key, group]) => (
@@ -172,9 +196,18 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
                                             <div className="session-exercises">
                                                 {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}
                                             </div>
-                                            <span className="edit-icon">
-                                                <Edit3 size={18} />
-                                            </span>
+                                            <div className="session-actions">
+                                                <button
+                                                    className="delete-icon-btn"
+                                                    onClick={(e) => handleDeleteClick(session, e)}
+                                                    title="Delete workout"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                                <span className="edit-icon">
+                                                    <Edit3 size={18} />
+                                                </span>
+                                            </div>
                                         </div>
                                     ))}
                             </div>
