@@ -11,6 +11,15 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [sessionToDelete, setSessionToDelete] = useState(null);
 
+    // Helper to parse date as local date (not UTC)
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return new Date();
+        // Extract just the date part (YYYY-MM-DD)
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        // Parse as noon local time to avoid timezone shifts
+        return new Date(datePart + 'T12:00:00');
+    };
+
     const groupedSessions = workoutHistory.reduce((acc, session) => {
         const round = session.round || 1;
         const week = session.week || 1;
@@ -182,7 +191,7 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
                 onClose={() => setShowDeleteModal(false)}
                 onConfirm={confirmDelete}
                 title="Delete Workout?"
-                message={`This will permanently delete the ${sessionToDelete?.day} workout from ${sessionToDelete ? new Date(sessionToDelete.date).toLocaleDateString() : ''}. This cannot be undone.`}
+                message={`This will permanently delete the ${sessionToDelete?.day} workout from ${sessionToDelete ? parseLocalDate(sessionToDelete.date).toLocaleDateString() : ''}. This cannot be undone.`}
             />
 
             <main className="content">
@@ -192,13 +201,13 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
                             <h3 className="group-header">Round {group.round}, Week {group.week}</h3>
                             <div className="sessions-list">
                                 {group.sessions
-                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                    .sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))
                                     .map((session, idx) => (
                                         <div key={idx} className="session-item" onClick={() => handleEditSession(session)}>
                                             <div className="session-info">
                                                 <strong>{session.day}</strong>
                                                 <span className="session-date">
-                                                    {new Date(session.date).toLocaleDateString()}
+                                                    {parseLocalDate(session.date).toLocaleDateString()}
                                                 </span>
                                             </div>
                                             <div className="session-exercises">
