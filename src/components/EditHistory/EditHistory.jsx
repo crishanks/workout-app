@@ -73,15 +73,6 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
             sets
         }));
 
-        // Check if date was changed
-        const originalDateStr = selectedSession.date.includes('T') 
-            ? selectedSession.date.split('T')[0] 
-            : selectedSession.date;
-        
-        if (editedDate !== originalDateStr && onUpdateDate) {
-            onUpdateDate(selectedSession.id, editedDate);
-        }
-
         onUpdateSession({
             ...selectedSession,
             exercises: updatedExercises,

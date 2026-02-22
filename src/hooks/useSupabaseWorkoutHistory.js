@@ -275,22 +275,39 @@ export const useSupabaseWorkoutHistory = () => {
 
         try {
             if (updatedSession.id) {
+                const updateData = {
+                    exercises: updatedSession.exercises,
+                    timestamp: updatedSession.timestamp
+                };
+
+                // If date is provided and different, update it too
+                if (updatedSession.date) {
+                    updateData.date = updatedSession.date;
+                }
+
                 const { error } = await supabase
                     .from('workout_sessions')
-                    .update({
-                        exercises: updatedSession.exercises,
-                        timestamp: updatedSession.timestamp
-                    })
+                    .update(updateData)
                     .eq('id', updatedSession.id);
 
                 if (error) throw error;
             }
 
-            const updatedHistory = workoutHistory.map(s =>
-                s.sessionKey === updatedSession.sessionKey || s.id === updatedSession.id
-                    ? updatedSession
-                    : s
-            );
+            const updatedHistory = workoutHistory.map(s => {
+                if (s.sessionKey === updatedSession.sessionKey || s.id === updatedSession.id) {
+                    const updated = { ...updatedSession };
+                    // Update sessionKey if date changed
+                    if (updatedSession.date && updatedSession.date !== s.date) {
+                        const dateStr = updatedSession.date.includes('T')
+                            ? updatedSession.date.split('T')[0]
+                            : updatedSession.date;
+                        const dateObj = new Date(dateStr + 'T12:00:00');
+                        updated.sessionKey = `${updatedSession.day}-${dateObj.toLocaleDateString()}`;
+                    }
+                    return updated;
+                }
+                return s;
+            });
 
             setWorkoutHistory(updatedHistory);
         } catch (error) {
