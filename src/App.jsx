@@ -28,7 +28,7 @@ function App() {
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, updateSessionDate, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const stats = useStats(workoutHistory);
   const roundManager = useRoundManager();
@@ -123,6 +123,7 @@ function App() {
         onBack={() => setShowEditHistory(false)}
         onUpdateSession={updateSession}
         onDeleteSession={deleteSession}
+        onUpdateDate={updateSessionDate}
       />
     );
   }

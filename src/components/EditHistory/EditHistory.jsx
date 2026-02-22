@@ -3,9 +3,10 @@ import { Edit3, Trash2 } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import './EditHistory.css';
 
-export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteSession }) => {
+export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteSession, onUpdateDate }) => {
     const [selectedSession, setSelectedSession] = useState(null);
     const [editedSets, setEditedSets] = useState({});
+    const [editedDate, setEditedDate] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [sessionToDelete, setSessionToDelete] = useState(null);
@@ -31,6 +32,10 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
 
     const handleEditSession = (session) => {
         setSelectedSession(session);
+        // Extract date from session.date (handle both ISO strings and date-only strings)
+        const dateStr = session.date.includes('T') ? session.date.split('T')[0] : session.date;
+        setEditedDate(dateStr);
+        
         const sets = {};
         session.exercises.forEach(ex => {
             const exerciseSets = {};
@@ -68,15 +73,25 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
             sets
         }));
 
+        // Check if date was changed
+        const originalDateStr = selectedSession.date.includes('T') 
+            ? selectedSession.date.split('T')[0] 
+            : selectedSession.date;
+        
+        if (editedDate !== originalDateStr && onUpdateDate) {
+            onUpdateDate(selectedSession.id, editedDate);
+        }
+
         onUpdateSession({
             ...selectedSession,
-            exercises: updatedExercises
-            // Keep original date and timestamp - don't update them
+            exercises: updatedExercises,
+            date: editedDate
         });
 
         setShowConfirmModal(false);
         setSelectedSession(null);
         setEditedSets({});
+        setEditedDate('');
     };
 
     const handleDeleteClick = (session, e) => {
@@ -112,14 +127,16 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession, onDeleteS
                 <main className="content">
                     <div className="edit-session-header">
                         <h2>{selectedSession.day}</h2>
-                        <p className="session-date">
-                            {new Date(selectedSession.date).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })}
-                        </p>
+                        <div className="date-edit-row">
+                            <label htmlFor="workout-date">Date:</label>
+                            <input
+                                id="workout-date"
+                                type="date"
+                                value={editedDate}
+                                onChange={(e) => setEditedDate(e.target.value)}
+                                className="date-input"
+                            />
+                        </div>
                         <p className="session-meta">Round {selectedSession.round}, Week {selectedSession.week}</p>
                     </div>
 

@@ -324,6 +324,62 @@ export const useSupabaseWorkoutHistory = () => {
         }
     };
 
+    const updateSessionDate = async (sessionId, newDate) => {
+        if (!userId) return;
+
+        try {
+            const { error } = await supabase
+                .from('workout_sessions')
+                .update({ date: newDate })
+                .eq('id', sessionId);
+
+            if (error) throw error;
+
+            // Update local state
+            const updatedHistory = workoutHistory.map(s => {
+                if (s.id === sessionId) {
+                    const updatedSession = { ...s, date: newDate };
+                    const dateObj = new Date(newDate + 'T12:00:00');
+                    updatedSession.sessionKey = `${s.day}-${dateObj.toLocaleDateString()}`;
+                    return updatedSession;
+                }
+                return s;
+            });
+            setWorkoutHistory(updatedHistory);
+        } catch (error) {
+            console.error('Error updating session date:', error);
+        }
+    };
+
+    // Expose debug functions globally
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.fixWorkoutDate = (sessionId, newDate) => {
+                updateSessionDate(sessionId, newDate);
+                console.log(`Updated workout ${sessionId} to date ${newDate}`);
+            };
+
+            window.listWorkouts = () => {
+                const sessions = workoutHistory.map(s => ({
+                    id: s.id,
+                    day: s.day,
+                    date: s.date,
+                    round: s.round,
+                    week: s.week,
+                    exercises: s.exercises.length
+                }));
+
+                if (sessions.length === 0) {
+                    console.log('No workouts found. Make sure data is loaded.');
+                    return [];
+                }
+
+                console.table(sessions);
+                return sessions;
+            };
+        }
+    }, [workoutHistory]);
+
     const getLastPerformedExercise = (dayName) => {
         const today = new Date().toLocaleDateString();
         const previousSessions = workoutHistory
@@ -346,6 +402,7 @@ export const useSupabaseWorkoutHistory = () => {
         clearRoundData,
         updateSession,
         deleteSession,
+        updateSessionDate,
         getLastPerformedExercise
     };
 };
