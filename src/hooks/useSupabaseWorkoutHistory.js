@@ -64,15 +64,19 @@ export const useSupabaseWorkoutHistory = () => {
     const logSet = async (dayName, currentWeek, currentRound, exerciseName, setIndex, weight, reps) => {
         if (!userId) return;
 
+        // Find existing session for this day in the current week/round
+        let session = workoutHistory.find(s =>
+            s.day === dayName &&
+            s.week === currentWeek &&
+            s.round === currentRound
+        );
+
+        const dateStr = getLocalDateString(); // Use local date, not UTC
         const today = new Date().toLocaleDateString();
         const sessionKey = `${dayName}-${today}`;
-        const dateStr = getLocalDateString(); // Use local date, not UTC
-
-        // Find existing session
-        let session = workoutHistory.find(s => s.sessionKey === sessionKey ||
-            (s.day === dayName && s.date === dateStr && s.round === currentRound));
 
         if (!session) {
+            // Create new session only if none exists for this week
             session = {
                 sessionKey,
                 user_id: userId,
@@ -83,6 +87,9 @@ export const useSupabaseWorkoutHistory = () => {
                 timestamp: new Date().toISOString(),
                 exercises: []
             };
+        } else {
+            // Use existing session but update sessionKey for local state tracking
+            session.sessionKey = session.sessionKey || sessionKey;
         }
 
         // Find or create exercise
@@ -143,23 +150,23 @@ export const useSupabaseWorkoutHistory = () => {
 
         saveTimeoutRef.current[saveKey] = setTimeout(async () => {
             try {
-                // Check if session exists in database
+                // Check if session exists in database by week/round/day (not by date)
                 const { data: existing } = await supabase
                     .from('workout_sessions')
-                    .select('id')
+                    .select('id, date')
                     .eq('user_id', userId)
                     .eq('day', dayName)
-                    .eq('date', dateStr)
+                    .eq('week', currentWeek)
                     .eq('round', currentRound)
                     .maybeSingle();
 
                 if (existing) {
-                    // Update existing session
+                    // Update existing session - keep original date
                     const { error } = await supabase
                         .from('workout_sessions')
                         .update({
                             exercises: session.exercises,
-                            timestamp: session.timestamp,
+                            timestamp: new Date().toISOString(),
                             week: currentWeek
                         })
                         .eq('id', existing.id);
@@ -167,8 +174,9 @@ export const useSupabaseWorkoutHistory = () => {
                     if (error) throw error;
 
                     session.id = existing.id;
+                    session.date = existing.date; // Preserve original date
                 } else {
-                    // Insert new session
+                    // Insert new session with today's date
                     const { data: newSession, error } = await supabase
                         .from('workout_sessions')
                         .insert([{
@@ -177,7 +185,7 @@ export const useSupabaseWorkoutHistory = () => {
                             date: dateStr,
                             week: currentWeek,
                             round: currentRound,
-                            timestamp: session.timestamp,
+                            timestamp: new Date().toISOString(),
                             exercises: session.exercises
                         }])
                         .select()
@@ -185,10 +193,11 @@ export const useSupabaseWorkoutHistory = () => {
 
                     if (error) throw error;
                     session.id = newSession.id;
+                    session.date = newSession.date;
 
                     // Update local state with the new ID
                     setWorkoutHistory(prev => prev.map(s =>
-                        s.sessionKey === sessionKey ? { ...s, id: newSession.id } : s
+                        s.sessionKey === sessionKey ? { ...s, id: newSession.id, date: newSession.date } : s
                     ));
                 }
             } catch (error) {
