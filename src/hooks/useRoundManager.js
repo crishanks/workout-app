@@ -75,9 +75,13 @@ export const useRoundManager = () => {
     };
 
     const startRound = (roundNumber) => {
+        // Use local date at midnight, not UTC
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
         const data = {
             round: roundNumber,
-            startDate: new Date().toISOString(),
+            startDate: today.toISOString(),
             endDate: null,
             isActive: true
         };
@@ -150,6 +154,17 @@ export const useRoundManager = () => {
         return roundData?.round || 0;
     };
 
+    const updateRoundStartDate = async (newStartDate) => {
+        if (!roundData || !userId) return;
+
+        const updatedData = {
+            ...roundData,
+            startDate: newStartDate
+        };
+
+        await saveRoundData(updatedData);
+    };
+
     return {
         roundData,
         loading,
@@ -160,6 +175,7 @@ export const useRoundManager = () => {
         isRoundComplete,
         hasActiveRound,
         getCurrentRound,
-        canRestart
+        canRestart,
+        updateRoundStartDate
     };
 };
