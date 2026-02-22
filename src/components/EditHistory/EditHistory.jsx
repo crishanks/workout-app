@@ -68,8 +68,8 @@ export const EditHistory = ({ workoutHistory, onBack, onUpdateSession }) => {
 
         onUpdateSession({
             ...selectedSession,
-            exercises: updatedExercises,
-            timestamp: new Date().toISOString()
+            exercises: updatedExercises
+            // Keep original date and timestamp - don't update them
         });
 
         setShowConfirmModal(false);
