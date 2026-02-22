@@ -295,7 +295,7 @@ export const useSupabaseWorkoutHistory = () => {
 
             const updatedHistory = workoutHistory.map(s => {
                 if (s.sessionKey === updatedSession.sessionKey || s.id === updatedSession.id) {
-                    const updated = { ...updatedSession };
+                    const updated = { ...s, ...updatedSession };
                     // Update sessionKey if date changed
                     if (updatedSession.date && updatedSession.date !== s.date) {
                         const dateStr = updatedSession.date.includes('T')
