@@ -1,4 +1,4 @@
-export const useStats = (workoutHistory) => {
+export const useStats = (workoutHistory, healthData = []) => {
   const calculateVolume = (exercise) => {
     let totalVolume = 0;
     Object.values(exercise.sets).forEach(set => {
@@ -84,6 +84,41 @@ export const useStats = (workoutHistory) => {
     return 0;
   };
 
+  const getStepGoalScore = () => {
+    if (!healthData || healthData.length === 0) return null;
+
+    // Group health data by week
+    const weeklySteps = {};
+    
+    healthData.forEach(entry => {
+      if (!entry.steps) return;
+      
+      const entryDate = new Date(entry.date);
+      // Get Monday of the week
+      const dayOfWeek = entryDate.getDay();
+      const diff = entryDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(entryDate.setDate(diff));
+      const weekKey = monday.toISOString().split('T')[0];
+      
+      if (!weeklySteps[weekKey]) {
+        weeklySteps[weekKey] = 0;
+      }
+      weeklySteps[weekKey] += entry.steps;
+    });
+
+    // Calculate achievement percentage for each week
+    const weeklyAchievements = Object.values(weeklySteps).map(totalSteps => {
+      return Math.min((totalSteps / 60000) * 100, 100);
+    });
+
+    if (weeklyAchievements.length === 0) return null;
+
+    // Calculate average achievement
+    const avgAchievement = weeklyAchievements.reduce((sum, val) => sum + val, 0) / weeklyAchievements.length;
+    
+    return avgAchievement;
+  };
+
   const getOverallRating = () => {
     if (workoutHistory.length === 0) {
       return { grade: '-', score: 0, color: '#888' };
@@ -92,8 +127,17 @@ export const useStats = (workoutHistory) => {
     const consistency = getConsistencyScore();
     const progress = getProgressScore();
     const streak = getStreakBonus();
+    const stepGoal = getStepGoalScore();
     
-    const score = (consistency * 0.4) + (progress * 0.4) + (streak * 0.2);
+    // Adjust weights based on whether step data is available
+    let score;
+    if (stepGoal !== null) {
+      // With step data: 35/35/15/15
+      score = (consistency * 0.35) + (progress * 0.35) + (streak * 0.15) + (stepGoal * 0.15);
+    } else {
+      // Without step data: maintain original proportions (40/40/20)
+      score = (consistency * 0.4) + (progress * 0.4) + (streak * 0.2);
+    }
     
     if (score >= 90) return { grade: 'S', score: Math.round(score), color: '#ffd700' };
     if (score >= 75) return { grade: 'A', score: Math.round(score), color: '#ff4444' };
@@ -158,6 +202,7 @@ export const useStats = (workoutHistory) => {
     getConsistencyScore,
     getProgressScore,
     getStreakBonus,
+    getStepGoalScore,
     getExercisePRs,
     getWeeklyConsistency
   };

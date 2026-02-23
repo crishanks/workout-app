@@ -5,6 +5,7 @@ import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
 import { useStats } from './hooks/useStats';
 import { useRoundManager } from './hooks/useRoundManager';
+import { useHealthData } from './hooks/useHealthData';
 import { Header } from './components/Header/Header';
 import { DayTabs } from './components/DayTabs/DayTabs';
 import { RestDay } from './components/RestDay/RestDay';
@@ -30,7 +31,8 @@ function App() {
 
   const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, updateSessionDate, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
-  const stats = useStats(workoutHistory);
+  const { healthData } = useHealthData();
+  const stats = useStats(workoutHistory, healthData);
   const roundManager = useRoundManager();
 
   const currentRound = roundManager.getCurrentRound();

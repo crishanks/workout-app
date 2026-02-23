@@ -7,6 +7,7 @@ export const Stats = ({ stats, onBack }) => {
   const consistency = Math.round(stats.getConsistencyScore());
   const progress = Math.round(stats.getProgressScore());
   const streak = Math.round(stats.getStreakBonus());
+  const stepGoal = stats.getStepGoalScore();
 
   const hasData = rating.score > 0;
 
@@ -42,6 +43,12 @@ export const Stats = ({ stats, onBack }) => {
                     <span className="breakdown-label">Streak</span>
                     <span className="breakdown-value">{streak}%</span>
                   </div>
+                  {stepGoal !== null && (
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Step Goals</span>
+                      <span className="breakdown-value">{Math.round(stepGoal)}%</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
