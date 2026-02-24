@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Edit3, Activity, Award } from 'lucide-react';
+import { Clock, TrendingUp, Activity } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -10,12 +10,10 @@ import { Header } from './components/Header/Header';
 import { DayTabs } from './components/DayTabs/DayTabs';
 import { RestDay } from './components/RestDay/RestDay';
 import { ExerciseCard } from './components/ExerciseCard/ExerciseCard';
-import { WorkoutHistory } from './components/WorkoutHistory/WorkoutHistory';
-import { RoundHistory } from './components/RoundHistory/RoundHistory';
 import { Stats } from './components/Stats/Stats';
 import { RoundStart } from './components/RoundStart/RoundStart';
 import { RoundComplete } from './components/RoundComplete/RoundComplete';
-import { EditHistory } from './components/EditHistory/EditHistory';
+import UnifiedHistory from './components/UnifiedHistory/UnifiedHistory';
 import { Modal } from './components/Modal/Modal';
 import { HelpSection } from './components/HelpSection/HelpSection';
 import { HealthProgress } from './components/HealthProgress/HealthProgress';
@@ -24,16 +22,13 @@ import './App.css';
 function App() {
   const [currentDay, setCurrentDay] = useState(0);
   const [showExercise, setShowExercise] = useState(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showRoundHistory, setShowRoundHistory] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showHealthProgress, setShowHealthProgress] = useState(false);
-  const [showEditHistory, setShowEditHistory] = useState(false);
-  const [historyRound, setHistoryRound] = useState(null);
+  const [showUnifiedHistory, setShowUnifiedHistory] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, updateSessionDate, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
+  const { logSet, getLastWorkout, getCurrentLog, workoutHistory, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
   const roundManager = useRoundManager();
   const { healthData } = useHealthData();
@@ -90,7 +85,6 @@ function App() {
   };
 
   const handleRestartRound = () => {
-    clearRoundData(currentRound);
     roundManager.restartCurrentRound();
     setShowRestartModal(false);
   };
@@ -122,14 +116,10 @@ function App() {
     );
   }
 
-  if (showEditHistory) {
+  if (showUnifiedHistory) {
     return (
-      <EditHistory
-        workoutHistory={workoutHistory}
-        onBack={() => setShowEditHistory(false)}
-        onUpdateSession={updateSession}
-        onDeleteSession={deleteSession}
-        onUpdateDate={updateSessionDate}
+      <UnifiedHistory
+        onBack={() => setShowUnifiedHistory(false)}
       />
     );
   }
@@ -138,35 +128,8 @@ function App() {
     return <HealthProgress onBack={() => setShowHealthProgress(false)} />;
   }
 
-  if (showRoundHistory) {
-    return (
-      <RoundHistory
-        workoutHistory={workoutHistory}
-        healthData={healthData}
-        roundManager={roundManager}
-        onBack={() => setShowRoundHistory(false)}
-      />
-    );
-  }
-
   if (showStats) {
     return <Stats stats={stats} onBack={() => setShowStats(false)} />;
-  }
-
-  if (showHistory) {
-    const rounds = getAllRounds(dayName);
-    return (
-      <WorkoutHistory
-        dayName={dayName}
-        rounds={rounds}
-        selectedRound={historyRound}
-        onRoundSelect={setHistoryRound}
-        onBack={() => {
-          setShowHistory(false);
-          setHistoryRound(null);
-        }}
-      />
-    );
   }
 
   return (
@@ -232,20 +195,14 @@ function App() {
               })}
             </div>
             <div className="header-actions">
-              <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
+              <button className="history-btn" onClick={() => setShowUnifiedHistory(true)} title="View History">
                 <Clock size={22} strokeWidth={2} />
-              </button>
-              <button className="round-history-btn" onClick={() => setShowRoundHistory(true)} title="View Round History">
-                <Award size={22} strokeWidth={2} />
               </button>
               <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
                 <TrendingUp size={22} strokeWidth={2} />
               </button>
               <button className="health-btn" onClick={() => setShowHealthProgress(true)} title="View Health Progress">
                 <Activity size={22} strokeWidth={2} />
-              </button>
-              <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
-                <Edit3 size={22} strokeWidth={2} />
               </button>
             </div>
           </>
