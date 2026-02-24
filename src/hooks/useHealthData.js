@@ -284,14 +284,44 @@ export const useHealthData = () => {
     if (!dataArray || dataArray.length === 0) return;
 
     try {
-      // Prepare data for upsert
-      const recordsToUpsert = dataArray.map(entry => ({
-        user_id: userId,
-        date: entry.date,
-        steps: entry.steps,
-        weight: entry.weight,
-        updated_at: new Date().toISOString()
-      }));
+      // Fetch existing records for these dates to preserve manual entries
+      const dates = dataArray.map(entry => entry.date);
+      const { data: existingRecords, error: fetchError } = await supabase
+        .from('health_data')
+        .select('*')
+        .eq('user_id', userId)
+        .in('date', dates);
+
+      if (fetchError) {
+        console.error('Error fetching existing records:', fetchError);
+      }
+
+      // Create a map of existing records by date
+      const existingMap = {};
+      if (existingRecords) {
+        existingRecords.forEach(record => {
+          existingMap[record.date] = record;
+        });
+      }
+
+      // Prepare data for upsert, preserving manual entries
+      const recordsToUpsert = dataArray.map(entry => {
+        const existing = existingMap[entry.date];
+        
+        return {
+          user_id: userId,
+          date: entry.date,
+          // Only update steps if new value exists, otherwise keep existing
+          steps: entry.steps !== null && entry.steps !== undefined 
+            ? entry.steps 
+            : (existing?.steps || null),
+          // Only update weight if new value exists, otherwise keep existing
+          weight: entry.weight !== null && entry.weight !== undefined 
+            ? entry.weight 
+            : (existing?.weight || null),
+          updated_at: new Date().toISOString()
+        };
+      });
 
       // Upsert data (insert or update on conflict)
       const { error: upsertError } = await supabase
