@@ -46,6 +46,7 @@
 }
 
 .history-btn,
+.round-history-btn,
 .stats-btn,
 .health-btn,
 .edit-btn,
@@ -67,6 +68,7 @@
 }
 
 .history-btn:hover,
+.round-history-btn:hover,
 .stats-btn:hover,
 .health-btn:hover,
 .edit-btn:hover,
@@ -76,6 +78,7 @@
 }
 
 .history-btn:active,
+.round-history-btn:active,
 .stats-btn:active,
 .health-btn:active,
 .edit-btn:active,
@@ -87,6 +90,7 @@
 }
 
 .history-btn.active,
+.round-history-btn.active,
 .stats-btn.active,
 .health-btn.active,
 .edit-btn.active,

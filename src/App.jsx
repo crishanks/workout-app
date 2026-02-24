@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Edit3, Activity } from 'lucide-react';
+import { Clock, TrendingUp, Edit3, Activity, Award } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -11,6 +11,7 @@ import { DayTabs } from './components/DayTabs/DayTabs';
 import { RestDay } from './components/RestDay/RestDay';
 import { ExerciseCard } from './components/ExerciseCard/ExerciseCard';
 import { WorkoutHistory } from './components/WorkoutHistory/WorkoutHistory';
+import { RoundHistory } from './components/RoundHistory/RoundHistory';
 import { Stats } from './components/Stats/Stats';
 import { RoundStart } from './components/RoundStart/RoundStart';
 import { RoundComplete } from './components/RoundComplete/RoundComplete';
@@ -24,6 +25,7 @@ function App() {
   const [currentDay, setCurrentDay] = useState(0);
   const [showExercise, setShowExercise] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showRoundHistory, setShowRoundHistory] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showHealthProgress, setShowHealthProgress] = useState(false);
   const [showEditHistory, setShowEditHistory] = useState(false);
@@ -136,6 +138,17 @@ function App() {
     return <HealthProgress onBack={() => setShowHealthProgress(false)} />;
   }
 
+  if (showRoundHistory) {
+    return (
+      <RoundHistory
+        workoutHistory={workoutHistory}
+        healthData={healthData}
+        roundManager={roundManager}
+        onBack={() => setShowRoundHistory(false)}
+      />
+    );
+  }
+
   if (showStats) {
     return <Stats stats={stats} onBack={() => setShowStats(false)} />;
   }
@@ -220,6 +233,9 @@ function App() {
             <div className="header-actions">
               <button className="history-btn" onClick={() => setShowHistory(true)} title="View History">
                 <Clock size={22} strokeWidth={2} />
+              </button>
+              <button className="round-history-btn" onClick={() => setShowRoundHistory(true)} title="View Round History">
+                <Award size={22} strokeWidth={2} />
               </button>
               <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
                 <TrendingUp size={22} strokeWidth={2} />
