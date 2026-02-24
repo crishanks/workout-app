@@ -531,6 +531,8 @@ export const useHealthData = () => {
   const getWeeklySteps = useCallback((startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const weekData = healthData.filter(entry => {
       const entryDate = new Date(entry.date);
@@ -541,13 +543,53 @@ export const useHealthData = () => {
       return sum + (entry.steps || 0);
     }, 0);
 
-    const goalMet = totalSteps >= 60000;
-    const percentageOfGoal = (totalSteps / 60000) * 100;
+    const weekGoal = 60000;
+    const percentageOfGoal = (totalSteps / weekGoal) * 100;
+
+    // Determine if the week is complete (end date is in the past)
+    const weekEnd = new Date(endDate);
+    weekEnd.setHours(23, 59, 59, 999);
+    const isWeekComplete = today > weekEnd;
+
+    // Calculate days elapsed in the week
+    const weekStart = new Date(startDate);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    let daysElapsed;
+    if (isWeekComplete) {
+      daysElapsed = 7; // Full week
+    } else {
+      // Calculate days from start to today (inclusive)
+      daysElapsed = Math.floor((today - weekStart) / (1000 * 60 * 60 * 24)) + 1;
+      daysElapsed = Math.max(1, Math.min(daysElapsed, 7)); // Clamp between 1 and 7
+    }
+
+    // Calculate expected steps based on days elapsed
+    const dailyGoal = weekGoal / 7; // ~8,571 steps per day
+    const expectedSteps = dailyGoal * daysElapsed;
+
+    // Determine status
+    let goalStatus;
+    if (isWeekComplete) {
+      // Week is over - definitive result
+      goalStatus = totalSteps >= weekGoal ? 'achieved' : 'missed';
+    } else {
+      // Week is in progress - check if on track
+      if (totalSteps >= expectedSteps) {
+        goalStatus = 'on-track';
+      } else {
+        goalStatus = 'behind';
+      }
+    }
 
     return {
       totalSteps,
-      goalMet,
+      goalMet: totalSteps >= weekGoal,
+      goalStatus, // 'achieved', 'missed', 'on-track', 'behind'
       percentageOfGoal: Math.round(percentageOfGoal),
+      isWeekComplete,
+      daysElapsed,
+      expectedSteps: Math.round(expectedSteps),
       dailySteps: weekData.map(entry => ({
         date: entry.date,
         steps: entry.steps || 0

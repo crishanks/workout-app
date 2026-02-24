@@ -59,8 +59,16 @@ const SessionCard = ({ session, healthMetrics, isFirstWeek, onEdit, onDelete }) 
           <span className="metric-label">Weekly Steps</span>
           <div className="metric-value-container">
             <span className="metric-value">{healthMetrics.steps.total.toLocaleString()}</span>
-            <span className={`step-goal-indicator ${healthMetrics.steps.goalMet ? 'goal-met' : 'goal-missed'}`}>
-              {healthMetrics.steps.goalMet ? '✓ Goal Met' : '✗ Goal Missed'}
+            <span className={`step-goal-indicator ${
+              healthMetrics.steps.goalStatus === 'achieved' ? 'goal-met' : 
+              healthMetrics.steps.goalStatus === 'on-track' ? 'on-track' :
+              healthMetrics.steps.goalStatus === 'behind' ? 'behind' :
+              'goal-missed'
+            }`}>
+              {healthMetrics.steps.goalStatus === 'achieved' && '✓ Goal Achieved'}
+              {healthMetrics.steps.goalStatus === 'missed' && '✗ Goal Missed'}
+              {healthMetrics.steps.goalStatus === 'on-track' && '→ On Track'}
+              {healthMetrics.steps.goalStatus === 'behind' && '⚠ Behind'}
             </span>
           </div>
         </div>

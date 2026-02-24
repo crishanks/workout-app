@@ -126,16 +126,23 @@
   width: fit-content;
 }
 
-.step-goal-indicator.goal-met {
-  color: #4caf50;
-  background: rgba(76, 175, 80, 0.15);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+.step-goal-indicator.goal-met,
+.step-goal-indicator.on-track {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.step-goal-indicator.behind {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .step-goal-indicator.goal-missed {
-  color: #ff4444;
-  background: rgba(255, 68, 68, 0.15);
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Exercise Summary Section */
