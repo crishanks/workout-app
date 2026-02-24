@@ -161,11 +161,25 @@ export const useHealthData = () => {
       }
 
       // Query weight data with error handling
-      // Note: The @capgo/capacitor-health plugin does not support querying discrete
-      // data types like weight with queryAggregated (it only supports cumulative data)
-      // Weight must be entered manually for now
+      // Weight is a discrete data type, so we use multipleStatistics instead of queryAggregated
       let weightData = [];
-      console.log('Weight sync not supported by plugin - manual entry only');
+      try {
+        const weightResult = await Health.multipleStatistics({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          dataTypes: ['weight']
+        });
+
+        // multipleStatistics returns data in a different format
+        if (weightResult && weightResult.weight) {
+          weightData = weightResult.weight;
+        }
+        console.log('Weight data retrieved:', weightData.length, 'entries');
+      } catch (weightError) {
+        console.error('Error querying weight data:', weightError);
+        // Continue without weight data
+        console.log('Weight sync failed - manual entry available');
+      }
 
       // Transform data to match database schema
       const transformedData = {};
