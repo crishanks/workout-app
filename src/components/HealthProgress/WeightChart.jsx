@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export const WeightChart = ({ data, height = 200 }) => {
+export const WeightChart = memo(({ data, height = 200 }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="chart-empty">
+      <div className="chart-empty" role="status" aria-live="polite">
         <p>No weight data available</p>
       </div>
     );
@@ -27,7 +28,7 @@ export const WeightChart = ({ data, height = 200 }) => {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="custom-tooltip">
+        <div className="custom-tooltip" role="tooltip">
           <p className="tooltip-date">{payload[0].payload.fullDate}</p>
           <p className="tooltip-value">{payload[0].value} lbs</p>
         </div>
@@ -36,8 +37,15 @@ export const WeightChart = ({ data, height = 200 }) => {
     return null;
   };
 
+  // Create accessible description
+  const chartDescription = `Weight chart showing ${data.length} data points from ${minWeight.toFixed(1)} to ${maxWeight.toFixed(1)} pounds`;
+
   return (
-    <div className="weight-chart-container">
+    <div 
+      className="weight-chart-container" 
+      role="img" 
+      aria-label={chartDescription}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
@@ -67,4 +75,4 @@ export const WeightChart = ({ data, height = 200 }) => {
       </ResponsiveContainer>
     </div>
   );
-};
+});

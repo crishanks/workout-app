@@ -32,6 +32,7 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
         <button 
           className="show-form-btn" 
           onClick={() => setShowForm(true)}
+          aria-label="Show manual entry form to add health data"
         >
           + Add Manual Entry
         </button>
@@ -40,9 +41,9 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
   }
 
   return (
-    <div className="manual-entry-form">
-      <h3>Add Health Data</h3>
-      <form onSubmit={handleSubmit}>
+    <div className="manual-entry-form" role="region" aria-labelledby="form-heading">
+      <h3 id="form-heading">Add Health Data</h3>
+      <form onSubmit={handleSubmit} aria-label="Manual health data entry form">
         <div className="form-group">
           <label htmlFor="date">Date *</label>
           <input
@@ -52,7 +53,12 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
             onChange={(e) => setDate(e.target.value)}
             max={getTodayDate()}
             required
+            aria-required="true"
+            aria-describedby="date-hint"
           />
+          <span id="date-hint" className="field-hint" aria-live="polite">
+            Required field. Select a date up to today.
+          </span>
         </div>
 
         <div className="form-group">
@@ -65,8 +71,9 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
             placeholder="e.g., 10000"
             min="0"
             max="200000"
+            aria-describedby="steps-hint"
           />
-          <span className="field-hint">Optional (0 - 200,000)</span>
+          <span id="steps-hint" className="field-hint">Optional (0 - 200,000)</span>
         </div>
 
         <div className="form-group">
@@ -80,12 +87,13 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
             min="50"
             max="1000"
             step="0.1"
+            aria-describedby="weight-hint"
           />
-          <span className="field-hint">Optional (50 - 1000 lbs)</span>
+          <span id="weight-hint" className="field-hint">Optional (50 - 1000 lbs)</span>
         </div>
 
         {error && (
-          <div className="form-error">
+          <div className="form-error" role="alert" aria-live="assertive">
             {error}
           </div>
         )}
@@ -101,6 +109,7 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
               setWeight('');
             }}
             disabled={loading}
+            aria-label="Cancel and close form"
           >
             Cancel
           </button>
@@ -108,6 +117,8 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
             type="submit" 
             className="submit-btn"
             disabled={loading || !date || (!steps && !weight)}
+            aria-label={loading ? 'Saving health data entry' : 'Save health data entry'}
+            aria-busy={loading}
           >
             {loading ? 'Saving...' : 'Save Entry'}
           </button>

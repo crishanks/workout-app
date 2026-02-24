@@ -88,6 +88,18 @@ export const useHealthData = () => {
       if (!granted) return false;
     }
 
+    // Debounce: Check if we synced recently (within last 5 minutes)
+    if (lastSyncTime) {
+      const timeSinceLastSync = Date.now() - new Date(lastSyncTime).getTime();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (timeSinceLastSync < fiveMinutes) {
+        const minutesRemaining = Math.ceil((fiveMinutes - timeSinceLastSync) / 60000);
+        setError(`Please wait ${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''} before syncing again`);
+        return false;
+      }
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -224,7 +236,7 @@ export const useHealthData = () => {
     } finally {
       setLoading(false);
     }
-  }, [isIOS, hasPermissions, requestPermissions]);
+  }, [isIOS, hasPermissions, requestPermissions, lastSyncTime]);
 
   // Save health data to Supabase with upsert logic
   const saveHealthDataToSupabase = async (dataArray) => {
@@ -302,10 +314,17 @@ export const useHealthData = () => {
       setLoading(true);
       setError(null);
 
+      // Calculate date range (last 12 weeks only for performance)
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - (12 * 7)); // 12 weeks ago
+      const startDateStr = startDate.toISOString().split('T')[0];
+
       const { data, error: fetchError } = await supabase
         .from('health_data')
         .select('*')
         .eq('user_id', userId)
+        .gte('date', startDateStr) // Only fetch last 12 weeks
         .order('date', { ascending: false });
 
       if (fetchError) {

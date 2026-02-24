@@ -110,15 +110,21 @@ export const HealthProgress = ({ onBack }) => {
   if (isIOS && !hasPermissions && !loading) {
     return (
       <div className="app">
-        <header className="health-header">
+        <header className="health-header" role="banner">
           <h1>Health Progress</h1>
           <div className="health-header-actions">
-            <button className="back-btn" onClick={onBack}>← Back</button>
+            <button 
+              className="back-btn" 
+              onClick={onBack}
+              aria-label="Go back to main screen"
+            >
+              ← Back
+            </button>
           </div>
         </header>
-        <main className="health-content">
-          <div className="permission-prompt">
-            <h3>Apple Health Access Required</h3>
+        <main className="health-content" role="main">
+          <div className="permission-prompt" role="region" aria-labelledby="permission-heading">
+            <h3 id="permission-heading">Apple Health Access Required</h3>
             <p>
               To track your weight and steps progress, we need access to your Apple Health data.
             </p>
@@ -131,7 +137,11 @@ export const HealthProgress = ({ onBack }) => {
               <li>Track weekly step goals (60,000 steps/week)</li>
               <li>See health metrics alongside your workouts</li>
             </ul>
-            <button className="permission-btn" onClick={handleRequestPermissions}>
+            <button 
+              className="permission-btn" 
+              onClick={handleRequestPermissions}
+              aria-label="Grant access to Apple Health data"
+            >
               Grant Access
             </button>
           </div>
@@ -144,15 +154,21 @@ export const HealthProgress = ({ onBack }) => {
   if (!isIOS) {
     return (
       <div className="app">
-        <header className="health-header">
+        <header className="health-header" role="banner">
           <h1>Health Progress</h1>
           <div className="health-header-actions">
-            <button className="back-btn" onClick={onBack}>← Back</button>
+            <button 
+              className="back-btn" 
+              onClick={onBack}
+              aria-label="Go back to main screen"
+            >
+              ← Back
+            </button>
           </div>
         </header>
-        <main className="health-content">
-          <div className="platform-message">
-            <h3>Manual Entry Mode</h3>
+        <main className="health-content" role="main">
+          <div className="platform-message" role="region" aria-labelledby="platform-heading">
+            <h3 id="platform-heading">Manual Entry Mode</h3>
             <p>
               Apple Health integration is only available on iOS devices. 
               You can manually enter your health data below.
@@ -160,7 +176,11 @@ export const HealthProgress = ({ onBack }) => {
           </div>
 
           {syncMessage && (
-            <div className={`sync-message ${syncMessage.type}`}>
+            <div 
+              className={`sync-message ${syncMessage.type}`}
+              role="alert"
+              aria-live="polite"
+            >
               {syncMessage.text}
             </div>
           )}
@@ -173,14 +193,14 @@ export const HealthProgress = ({ onBack }) => {
 
           {hasData && (
             <>
-              <section className="health-section weight-section">
-                <h2>Weight Progress</h2>
+              <section className="health-section weight-section" aria-labelledby="weight-heading">
+                <h2 id="weight-heading">Weight Progress</h2>
                 <WeightChart data={weightProgress.entries} />
                 <WeightSummary weightProgress={weightProgress} />
               </section>
 
-              <section className="health-section steps-section">
-                <h2>Steps Progress</h2>
+              <section className="health-section steps-section" aria-labelledby="steps-heading">
+                <h2 id="steps-heading">Steps Progress</h2>
                 <WeeklyStepsChart data={weeklyStepsData} />
                 <CurrentWeekSteps stepsData={currentWeekSteps} />
               </section>
@@ -188,7 +208,7 @@ export const HealthProgress = ({ onBack }) => {
           )}
 
           {!hasData && !loading && (
-            <div className="no-data-message">
+            <div className="no-data-message" role="status" aria-live="polite">
               <p>No health data yet. Add your first entry above to get started!</p>
             </div>
           )}
@@ -199,44 +219,62 @@ export const HealthProgress = ({ onBack }) => {
 
   return (
     <div className="app">
-      <header className="health-header">
+      <header className="health-header" role="banner">
         <h1>Health Progress</h1>
         <div className="health-header-actions">
-          <button className="back-btn" onClick={onBack}>← Back</button>
+          <button 
+            className="back-btn" 
+            onClick={onBack}
+            aria-label="Go back to main screen"
+          >
+            ← Back
+          </button>
           {isIOS && hasPermissions && (
             <button 
               className="sync-btn" 
               onClick={handleSync}
               disabled={syncing}
+              aria-label={syncing ? 'Syncing health data' : 'Sync health data from Apple Health'}
+              aria-busy={syncing}
             >
-              <RefreshCw size={18} className={syncing ? 'spinning' : ''} />
+              <RefreshCw size={18} className={syncing ? 'spinning' : ''} aria-hidden="true" />
               {syncing ? 'Syncing...' : 'Sync'}
             </button>
           )}
         </div>
       </header>
 
-      <main className="health-content">
+      <main className="health-content" role="main">
         {syncMessage && (
-          <div className={`sync-message ${syncMessage.type}`}>
+          <div 
+            className={`sync-message ${syncMessage.type}`}
+            role="alert"
+            aria-live="polite"
+          >
             {syncMessage.text}
           </div>
         )}
 
         {error && !syncMessage && (
-          <div className="error-message">
+          <div className="error-message" role="alert" aria-live="assertive">
             {error}
           </div>
         )}
 
         {!hasData && !loading && (
-          <div className="no-data-prompt">
-            <h3>No Health Data</h3>
+          <div className="no-data-prompt" role="region" aria-labelledby="no-data-heading">
+            <h3 id="no-data-heading">No Health Data</h3>
             <p>
               Sync your Apple Health data to see your progress.
             </p>
-            <button className="sync-btn-large" onClick={handleSync} disabled={syncing}>
-              <RefreshCw size={20} className={syncing ? 'spinning' : ''} />
+            <button 
+              className="sync-btn-large" 
+              onClick={handleSync} 
+              disabled={syncing}
+              aria-label={syncing ? 'Syncing health data' : 'Sync health data now'}
+              aria-busy={syncing}
+            >
+              <RefreshCw size={20} className={syncing ? 'spinning' : ''} aria-hidden="true" />
               {syncing ? 'Syncing...' : 'Sync Now'}
             </button>
           </div>
@@ -244,14 +282,14 @@ export const HealthProgress = ({ onBack }) => {
 
         {hasData && (
           <>
-            <section className="health-section weight-section">
-              <h2>Weight Progress</h2>
+            <section className="health-section weight-section" aria-labelledby="weight-heading">
+              <h2 id="weight-heading">Weight Progress</h2>
               <WeightChart data={weightProgress.entries} />
               <WeightSummary weightProgress={weightProgress} />
             </section>
 
-            <section className="health-section steps-section">
-              <h2>Steps Progress</h2>
+            <section className="health-section steps-section" aria-labelledby="steps-heading">
+              <h2 id="steps-heading">Steps Progress</h2>
               <WeeklyStepsChart data={weeklyStepsData} />
               <CurrentWeekSteps stepsData={currentWeekSteps} />
             </section>

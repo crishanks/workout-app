@@ -1,7 +1,9 @@
-export const WeightSummary = ({ weightProgress }) => {
+import { memo } from 'react';
+
+export const WeightSummary = memo(({ weightProgress }) => {
   if (!weightProgress || !weightProgress.currentWeight) {
     return (
-      <div className="weight-summary no-data">
+      <div className="weight-summary no-data" role="status" aria-live="polite">
         <p>No weight data available. {' '}
           <span className="hint">Sync from Apple Health or add entries manually.</span>
         </p>
@@ -23,29 +25,42 @@ export const WeightSummary = ({ weightProgress }) => {
     return 'var(--text-secondary)';
   };
 
+  const getTrendText = () => {
+    if (trend === 'increasing') return 'increasing';
+    if (trend === 'decreasing') return 'decreasing';
+    return 'stable';
+  };
+
   const changeText = totalChange > 0 ? `+${totalChange}` : totalChange;
+  const summaryAriaLabel = `Weight summary: Current weight ${currentWeight} pounds${startWeight ? `, starting weight ${startWeight} pounds` : ''}${totalChange !== 0 ? `, total change ${changeText} pounds, trend ${getTrendText()}` : ''}`;
 
   return (
-    <div className="weight-summary">
-      <div className="summary-stats">
-        <div className="summary-item">
-          <span className="summary-label">Current Weight</span>
-          <span className="summary-value">{currentWeight} lbs</span>
+    <div className="weight-summary" role="region" aria-label={summaryAriaLabel}>
+      <div className="summary-stats" role="list">
+        <div className="summary-item" role="listitem">
+          <span className="summary-label" id="current-weight-label">Current Weight</span>
+          <span className="summary-value" aria-labelledby="current-weight-label">
+            {currentWeight} lbs
+          </span>
         </div>
         
         {startWeight && (
-          <div className="summary-item">
-            <span className="summary-label">Starting Weight</span>
-            <span className="summary-value">{startWeight} lbs</span>
+          <div className="summary-item" role="listitem">
+            <span className="summary-label" id="start-weight-label">Starting Weight</span>
+            <span className="summary-value" aria-labelledby="start-weight-label">
+              {startWeight} lbs
+            </span>
           </div>
         )}
         
         {totalChange !== 0 && (
-          <div className="summary-item">
-            <span className="summary-label">Total Change</span>
+          <div className="summary-item" role="listitem">
+            <span className="summary-label" id="total-change-label">Total Change</span>
             <span 
               className="summary-value change" 
               style={{ color: getTrendColor() }}
+              aria-labelledby="total-change-label"
+              aria-label={`${changeText} pounds, ${getTrendText()}`}
             >
               {getTrendIcon()} {changeText} lbs
             </span>
@@ -54,4 +69,4 @@ export const WeightSummary = ({ weightProgress }) => {
       </div>
     </div>
   );
-};
+});

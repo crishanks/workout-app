@@ -47,6 +47,7 @@
 
 .history-btn,
 .stats-btn,
+.health-btn,
 .edit-btn,
 .help-btn {
   background: rgba(255, 255, 255, 0.2);
@@ -57,7 +58,7 @@
   padding: 0;
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   line-height: 1;
   box-shadow: none;
   display: flex;
@@ -67,6 +68,7 @@
 
 .history-btn:hover,
 .stats-btn:hover,
+.health-btn:hover,
 .edit-btn:hover,
 .help-btn:hover {
   background: rgba(255, 255, 255, 0.15);
@@ -75,6 +77,7 @@
 
 .history-btn:active,
 .stats-btn:active,
+.health-btn:active,
 .edit-btn:active,
 .help-btn:active {
   background: rgba(255, 255, 255, 0.3);
@@ -85,6 +88,7 @@
 
 .history-btn.active,
 .stats-btn.active,
+.health-btn.active,
 .edit-btn.active,
 .help-btn.active {
   background: rgba(255, 255, 255, 0.3);

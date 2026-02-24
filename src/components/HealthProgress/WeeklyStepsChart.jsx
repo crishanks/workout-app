@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-export const WeeklyStepsChart = ({ data, goal = 60000, height = 250 }) => {
+export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="chart-empty">
+      <div className="chart-empty" role="status" aria-live="polite">
         <p>No steps data available</p>
       </div>
     );
@@ -28,7 +29,7 @@ export const WeeklyStepsChart = ({ data, goal = 60000, height = 250 }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="custom-tooltip">
+        <div className="custom-tooltip" role="tooltip">
           <p className="tooltip-label">{data.week}</p>
           <p className="tooltip-value">{data.steps.toLocaleString()} steps</p>
           <p className="tooltip-percentage" style={{ 
@@ -58,8 +59,16 @@ export const WeeklyStepsChart = ({ data, goal = 60000, height = 250 }) => {
     );
   };
 
+  // Create accessible description
+  const weeksMetGoal = data.filter(w => w.goalMet).length;
+  const chartDescription = `Weekly steps chart showing ${data.length} weeks. ${weeksMetGoal} out of ${data.length} weeks met the 60,000 step goal`;
+
   return (
-    <div className="steps-chart-container">
+    <div 
+      className="steps-chart-container" 
+      role="img" 
+      aria-label={chartDescription}
+    >
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
@@ -97,4 +106,4 @@ export const WeeklyStepsChart = ({ data, goal = 60000, height = 250 }) => {
       </ResponsiveContainer>
     </div>
   );
-};
+});
