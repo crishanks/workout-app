@@ -120,3 +120,128 @@ header.header h1 {
   color: var(--text-secondary);
   font-weight: 500;
 }
+
+.round-dates-container {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.edit-date-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 4px;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+.edit-date-btn:hover {
+  color: var(--accent-primary);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.edit-date-btn:active {
+  transform: scale(0.95);
+}
+
+.date-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.date-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.date-modal h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.date-modal-info {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.date-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.date-modal-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.cancel-btn {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.save-btn {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.save-btn:hover {
+  background: #7c3aed;
+}
+
+.save-btn:active,
+.cancel-btn:active {
+  transform: scale(0.98);
+}

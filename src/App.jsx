@@ -179,6 +179,7 @@ function App() {
         onHelpClick={() => setShowHelp(true)}
         canRestart={roundManager.canRestart()}
         roundStartDate={roundManager.roundData?.startDate}
+        onUpdateStartDate={roundManager.updateRoundStartDate}
       />
       <DayTabs days={week?.days || []} currentDay={currentDay} onDayChange={setCurrentDay} />
 
