@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './ManualEntryForm.css';
 
-export const ManualEntryForm = ({ onSubmit, loading, error }) => {
+export const ManualEntryForm = ({ onSubmit, loading, error, stepsDisabled = false }) => {
   const [date, setDate] = useState('');
   const [steps, setSteps] = useState('');
   const [weight, setWeight] = useState('');
@@ -42,7 +42,7 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
 
   return (
     <div className="manual-entry-form" role="region" aria-labelledby="form-heading">
-      <h3 id="form-heading">Add Health Data</h3>
+      <h3 id="form-heading">{stepsDisabled ? 'Add Weight Entry' : 'Add Health Data'}</h3>
       <form onSubmit={handleSubmit} aria-label="Manual health data entry form">
         <div className="form-group">
           <label htmlFor="date">Date *</label>
@@ -61,20 +61,22 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
           </span>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="steps">Steps</label>
-          <input
-            type="number"
-            id="steps"
-            value={steps}
-            onChange={(e) => setSteps(e.target.value)}
-            placeholder="e.g., 10000"
-            min="0"
-            max="200000"
-            aria-describedby="steps-hint"
-          />
-          <span id="steps-hint" className="field-hint">Optional (0 - 200,000)</span>
-        </div>
+        {!stepsDisabled && (
+          <div className="form-group">
+            <label htmlFor="steps">Steps</label>
+            <input
+              type="number"
+              id="steps"
+              value={steps}
+              onChange={(e) => setSteps(e.target.value)}
+              placeholder="e.g., 10000"
+              min="0"
+              max="200000"
+              aria-describedby="steps-hint"
+            />
+            <span id="steps-hint" className="field-hint">Optional (0 - 200,000)</span>
+          </div>
+        )}
 
         <div className="form-group">
           <label htmlFor="weight">Weight (lbs)</label>
@@ -120,7 +122,7 @@ export const ManualEntryForm = ({ onSubmit, loading, error }) => {
             aria-label={loading ? 'Saving health data entry' : 'Save health data entry'}
             aria-busy={loading}
           >
-            {loading ? 'Saving...' : 'Save Entry'}
+            {loading ? 'Saving...' : (stepsDisabled ? 'Save Weight' : 'Save Entry')}
           </button>
         </div>
       </form>
