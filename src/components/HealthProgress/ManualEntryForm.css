@@ -22,7 +22,7 @@
   background: var(--card-bg, #f8f9fa);
   border-radius: 12px;
   padding: 1.5rem;
-  margin: 1rem 0;
+  margin: 0;
 }
 
 .manual-entry-form h3 {

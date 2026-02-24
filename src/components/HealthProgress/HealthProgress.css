@@ -81,12 +81,29 @@
 }
 
 .health-content {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   max-width: 800px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.manual-entry-section {
+  margin-top: -1rem;
+}
+
+.manual-entry-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.manual-entry-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
 }
 
 .sync-message {
