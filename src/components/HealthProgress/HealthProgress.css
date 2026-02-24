@@ -1,6 +1,7 @@
 .health-header {
   background: var(--bg-secondary);
   padding: 1rem;
+  padding-top: calc(env(safe-area-inset-top) + 1rem);
   position: sticky;
   top: 0;
   z-index: 100;
