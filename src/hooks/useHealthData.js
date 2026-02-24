@@ -42,16 +42,22 @@ export const useHealthData = () => {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 1);
 
-        await Health.queryAggregated({
+        const result = await Health.queryAggregated({
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           dataType: 'steps',
           interval: 'day'
         });
 
-        // If query succeeded, we have permissions
-        setHasPermissions(true);
-        return true;
+        // If query succeeded and returned data, we have permissions
+        if (result && (result.samples || Array.isArray(result))) {
+          setHasPermissions(true);
+          return true;
+        } else {
+          setHasPermissions(false);
+          setError('Apple Health permissions were denied. Please enable them in Settings to sync your health data.');
+          return false;
+        }
       } catch (queryErr) {
         // If query failed, permissions were likely denied
         setHasPermissions(false);
@@ -89,7 +95,10 @@ export const useHealthData = () => {
         });
 
         // If we got here without an error, we have permissions
-        setHasPermissions(true);
+        // Check if we got actual data back (result.samples exists)
+        if (result && (result.samples || Array.isArray(result))) {
+          setHasPermissions(true);
+        }
       } catch (err) {
         // If querying fails, we likely don't have permissions
         console.log('No existing permissions detected:', err);
@@ -116,7 +125,7 @@ export const useHealthData = () => {
     if (lastSyncTime) {
       const timeSinceLastSync = Date.now() - new Date(lastSyncTime).getTime();
       const fiveMinutes = 5 * 60 * 1000;
-      
+
       if (timeSinceLastSync < fiveMinutes) {
         const minutesRemaining = Math.ceil((fiveMinutes - timeSinceLastSync) / 60000);
         setError(`Please wait ${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''} before syncing again`);
@@ -136,12 +145,15 @@ export const useHealthData = () => {
       // Query steps data with error handling
       let stepsData = [];
       try {
-        stepsData = await Health.queryAggregated({
+        const stepsResult = await Health.queryAggregated({
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           dataType: 'steps',
           interval: 'day'
         });
+
+        // queryAggregated returns { samples: [...] }
+        stepsData = stepsResult.samples || stepsResult || [];
       } catch (stepsError) {
         console.error('Error querying steps data:', stepsError);
         // Continue with weight data even if steps fail
@@ -151,11 +163,16 @@ export const useHealthData = () => {
       // Query weight data with error handling
       let weightData = [];
       try {
-        weightData = await Health.query({
+        // Use queryAggregated for weight as well, with 'day' interval
+        const weightResult = await Health.queryAggregated({
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
-          dataType: 'weight'
+          dataType: 'weight',
+          interval: 'day'
         });
+
+        // queryAggregated returns { samples: [...] }
+        weightData = weightResult.samples || weightResult || [];
       } catch (weightError) {
         console.error('Error querying weight data:', weightError);
         // If both failed, throw error
@@ -173,7 +190,7 @@ export const useHealthData = () => {
         stepsData.forEach(entry => {
           const date = new Date(entry.startDate).toISOString().split('T')[0];
           const steps = Math.round(entry.value);
-          
+
           // Validate steps data before adding
           const validation = validateHealthData(steps, null);
           if (validation.isValid) {
@@ -194,7 +211,7 @@ export const useHealthData = () => {
           const date = new Date(entry.startDate).toISOString().split('T')[0];
           const timestamp = new Date(entry.startDate).getTime();
           const weight = parseFloat(entry.value.toFixed(2));
-          
+
           // Validate weight data before adding
           const validation = validateHealthData(null, weight);
           if (validation.isValid) {
@@ -241,10 +258,10 @@ export const useHealthData = () => {
       return true;
     } catch (err) {
       console.error('Error syncing from Apple Health:', err);
-      
+
       // Provide user-friendly error messages
       let errorMessage = 'Failed to sync health data. ';
-      
+
       if (err.message.includes('network') || err.message.includes('internet')) {
         errorMessage += 'Please check your internet connection and try again.';
       } else if (err.message.includes('permission')) {
@@ -254,7 +271,7 @@ export const useHealthData = () => {
       } else {
         errorMessage += err.message || 'Please try again later.';
       }
-      
+
       setError(errorMessage);
       return false;
     } finally {
@@ -300,7 +317,7 @@ export const useHealthData = () => {
       }
     } catch (err) {
       console.error('Error saving to Supabase:', err);
-      
+
       // Store failed data for retry
       const failedData = {
         data: dataArray,
@@ -308,7 +325,7 @@ export const useHealthData = () => {
         error: err.message
       };
       localStorage.setItem('health-data-retry', JSON.stringify(failedData));
-      
+
       // Re-throw with user-friendly message
       if (err.message.includes('Network') || err.message.includes('network')) {
         throw new Error('Could not save data due to network issues. Data will be retried automatically.');
@@ -365,7 +382,7 @@ export const useHealthData = () => {
       }
 
       setHealthData(data || []);
-      
+
       // Try to retry any failed saves
       await retryFailedSaves();
     } catch (err) {
@@ -388,7 +405,7 @@ export const useHealthData = () => {
     // Validate steps if provided
     if (steps !== null && steps !== undefined) {
       const stepsNum = typeof steps === 'string' ? parseInt(steps, 10) : steps;
-      
+
       if (isNaN(stepsNum)) {
         errors.push('Steps must be a valid number');
       } else if (stepsNum < 0) {
@@ -401,7 +418,7 @@ export const useHealthData = () => {
     // Validate weight if provided
     if (weight !== null && weight !== undefined) {
       const weightNum = typeof weight === 'string' ? parseFloat(weight) : weight;
-      
+
       if (isNaN(weightNum)) {
         errors.push('Weight must be a valid number');
       } else if (weightNum < 50) {
@@ -432,7 +449,7 @@ export const useHealthData = () => {
       const entryDate = new Date(date);
       const today = new Date();
       today.setHours(23, 59, 59, 999); // End of today
-      
+
       if (entryDate > today) {
         throw new Error('Cannot add data for future dates');
       }
@@ -440,14 +457,14 @@ export const useHealthData = () => {
       // Validate date is not too old (more than 1 year)
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      
+
       if (entryDate < oneYearAgo) {
         throw new Error('Cannot add data older than 1 year');
       }
 
       // At least one value must be provided
-      if ((steps === null || steps === undefined || steps === '') && 
-          (weight === null || weight === undefined || weight === '')) {
+      if ((steps === null || steps === undefined || steps === '') &&
+        (weight === null || weight === undefined || weight === '')) {
         throw new Error('At least one of steps or weight must be provided');
       }
 
@@ -484,7 +501,7 @@ export const useHealthData = () => {
   const getWeeklySteps = useCallback((startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     const weekData = healthData.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= start && entryDate <= end;
@@ -548,7 +565,7 @@ export const useHealthData = () => {
   const getWeeklyAverageWeight = useCallback((startDate, endDate) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     const weekData = healthData.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= start && entryDate <= end && entry.weight !== null && entry.weight !== undefined;
