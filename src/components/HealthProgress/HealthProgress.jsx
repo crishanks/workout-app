@@ -276,7 +276,6 @@ export const HealthProgress = ({ onBack }) => {
 
         {/* Manual entry form for weight (since Apple Health weight sync is not available) */}
         <div className="manual-entry-section">
-          <h3>Add Weight Entry</h3>
           <ManualEntryForm
             onSubmit={handleManualEntry}
             loading={loading}

@@ -28,44 +28,51 @@
 .manual-entry-form h3 {
   margin: 0 0 1.5rem 0;
   font-size: 1.25rem;
-  color: var(--text-primary, #333);
+  color: #1a1a1a;
 }
 
-.form-group {
+.manual-entry-form .form-group {
   margin-bottom: 1.25rem;
 }
 
-.form-group label {
+.manual-entry-form .form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: var(--text-primary, #333);
+  color: #1a1a1a;
   font-size: 0.95rem;
 }
 
-.form-group input {
+.manual-entry-form .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color, #ddd);
+  border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  background: white;
+  color: #1a1a1a;
 }
 
-.form-group input:focus {
+.manual-entry-form .form-group input::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+.manual-entry-form .form-group input:focus {
   outline: none;
   border-color: var(--primary-color, #007bff);
 }
 
-.field-hint {
+.manual-entry-form .field-hint {
   display: block;
   margin-top: 0.25rem;
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: #666;
 }
 
-.form-error {
+.manual-entry-form .form-error {
   background: #fee;
   color: #c33;
   padding: 0.75rem;
@@ -74,14 +81,14 @@
   font-size: 0.9rem;
 }
 
-.form-actions {
+.manual-entry-form .form-actions {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
 }
 
-.cancel-btn,
-.submit-btn {
+.manual-entry-form .cancel-btn,
+.manual-entry-form .submit-btn {
   flex: 1;
   padding: 0.75rem;
   border: none;
@@ -91,26 +98,26 @@
   transition: all 0.2s;
 }
 
-.cancel-btn {
-  background: var(--secondary-bg, #e9ecef);
-  color: var(--text-primary, #333);
+.manual-entry-form .cancel-btn {
+  background: #e9ecef;
+  color: #1a1a1a;
 }
 
-.cancel-btn:hover:not(:disabled) {
+.manual-entry-form .cancel-btn:hover:not(:disabled) {
   background: var(--secondary-hover, #dee2e6);
 }
 
-.submit-btn {
+.manual-entry-form .submit-btn {
   background: var(--primary-color, #007bff);
   color: white;
 }
 
-.submit-btn:hover:not(:disabled) {
+.manual-entry-form .submit-btn:hover:not(:disabled) {
   background: var(--primary-hover, #0056b3);
 }
 
-.cancel-btn:disabled,
-.submit-btn:disabled {
+.manual-entry-form .cancel-btn:disabled,
+.manual-entry-form .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

@@ -75,6 +75,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -96,7 +97,7 @@
 .manual-entry-section h3 {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
-  color: var(--text-primary);
+  color: #1a1a1a;
   font-weight: 600;
 }
 
@@ -132,6 +133,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -188,6 +190,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -279,7 +282,7 @@
   .summary-stats {
     flex-direction: column;
   }
-  
+
   .summary-item {
     min-width: 100%;
   }
@@ -645,17 +648,17 @@
   .health-content {
     padding: 0.75rem;
   }
-  
+
   .health-section {
     padding: 1rem;
   }
-  
+
   .permission-prompt,
   .platform-message,
   .no-data-prompt {
     padding: 1.5rem;
   }
-  
+
   .permission-prompt h3,
   .platform-message h3,
   .no-data-prompt h3 {
@@ -667,11 +670,11 @@
   .health-header h1 {
     font-size: 1.3rem;
   }
-  
+
   .health-header-actions {
     width: 100%;
   }
-  
+
   .back-btn,
   .sync-btn {
     flex: 1;

@@ -33,9 +33,9 @@ function App() {
 
   const { logSet, getLastWorkout, getCurrentLog, getAllRounds, workoutHistory, clearRoundData, updateSession, deleteSession, updateSessionDate, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
-  const { healthData } = useHealthData();
-  const stats = useStats(workoutHistory, healthData);
   const roundManager = useRoundManager();
+  const { healthData } = useHealthData();
+  const stats = useStats(workoutHistory, healthData, roundManager.roundData?.startDate);
 
   const currentRound = roundManager.getCurrentRound();
   const currentWeek = roundManager.getCurrentWeekInRound();

@@ -1,4 +1,4 @@
-export const useStats = (workoutHistory, healthData = []) => {
+export const useStats = (workoutHistory, healthData = [], roundStartDate = null) => {
   const calculateVolume = (exercise) => {
     let totalVolume = 0;
     Object.values(exercise.sets).forEach(set => {
@@ -87,10 +87,25 @@ export const useStats = (workoutHistory, healthData = []) => {
   const getStepGoalScore = () => {
     if (!healthData || healthData.length === 0) return null;
 
+    // Filter health data to only include entries from the current round
+    let filteredHealthData = healthData;
+    if (roundStartDate) {
+      const roundStart = new Date(roundStartDate);
+      roundStart.setHours(0, 0, 0, 0);
+      
+      filteredHealthData = healthData.filter(entry => {
+        const entryDate = new Date(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
+        return entryDate >= roundStart;
+      });
+    }
+
+    if (filteredHealthData.length === 0) return null;
+
     // Group health data by week
     const weeklySteps = {};
     
-    healthData.forEach(entry => {
+    filteredHealthData.forEach(entry => {
       if (!entry.steps) return;
       
       const entryDate = new Date(entry.date);
