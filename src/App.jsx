@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Edit3 } from 'lucide-react';
+import { Clock, TrendingUp, Edit3, Activity } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
@@ -17,6 +17,7 @@ import { RoundComplete } from './components/RoundComplete/RoundComplete';
 import { EditHistory } from './components/EditHistory/EditHistory';
 import { Modal } from './components/Modal/Modal';
 import { HelpSection } from './components/HelpSection/HelpSection';
+import { HealthProgress } from './components/HealthProgress/HealthProgress';
 import './App.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
   const [showExercise, setShowExercise] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showHealthProgress, setShowHealthProgress] = useState(false);
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [historyRound, setHistoryRound] = useState(null);
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -130,6 +132,10 @@ function App() {
     );
   }
 
+  if (showHealthProgress) {
+    return <HealthProgress onBack={() => setShowHealthProgress(false)} />;
+  }
+
   if (showStats) {
     return <Stats stats={stats} onBack={() => setShowStats(false)} />;
   }
@@ -217,6 +223,9 @@ function App() {
               </button>
               <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
                 <TrendingUp size={22} strokeWidth={2} />
+              </button>
+              <button className="health-btn" onClick={() => setShowHealthProgress(true)} title="View Health Progress">
+                <Activity size={22} strokeWidth={2} />
               </button>
               <button className="edit-btn" onClick={() => setShowEditHistory(true)} title="Edit History">
                 <Edit3 size={22} strokeWidth={2} />
