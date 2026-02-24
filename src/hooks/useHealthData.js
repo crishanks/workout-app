@@ -30,15 +30,30 @@ export const useHealthData = () => {
       setError(null);
 
       // Request permissions for steps and weight
-      const result = await Health.requestAuthorization({
+      await Health.requestAuthorization({
         read: ['steps', 'weight'],
         write: []
       });
 
-      if (result.granted) {
+      // The plugin doesn't return a clear granted/denied status
+      // So we'll try to query data to verify we have access
+      try {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+
+        await Health.queryAggregated({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          dataType: 'steps',
+          interval: 'day'
+        });
+
+        // If query succeeded, we have permissions
         setHasPermissions(true);
         return true;
-      } else {
+      } catch (queryErr) {
+        // If query failed, permissions were likely denied
         setHasPermissions(false);
         setError('Apple Health permissions were denied. Please enable them in Settings to sync your health data.');
         return false;
@@ -59,17 +74,26 @@ export const useHealthData = () => {
       if (!isIOS) return;
 
       try {
-        // Try to check if we already have permissions
-        const result = await Health.checkPermissions({
-          read: ['steps', 'weight']
+        // The @capgo/capacitor-health plugin doesn't have a checkPermissions method
+        // Instead, we'll try to query a small amount of data to see if we have access
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1); // Just check last day
+
+        // Try to query steps data - if this succeeds, we have permissions
+        const result = await Health.queryAggregated({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          dataType: 'steps',
+          interval: 'day'
         });
 
-        if (result.granted) {
-          setHasPermissions(true);
-        }
+        // If we got here without an error, we have permissions
+        setHasPermissions(true);
       } catch (err) {
-        // If checking fails, we'll assume no permissions
-        console.log('Could not check permissions:', err);
+        // If querying fails, we likely don't have permissions
+        console.log('No existing permissions detected:', err);
+        setHasPermissions(false);
       }
     };
 
