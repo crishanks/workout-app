@@ -111,29 +111,29 @@ export const useHealthData = () => {
 
   // Sync data from Apple Health
   const syncFromAppleHealth = useCallback(async () => {
-    if (!isIOS) {
-      setError('Apple Health is only available on iOS devices');
-      return false;
-    }
-
-    if (!hasPermissions) {
-      const granted = await requestPermissions();
-      if (!granted) return false;
-    }
-
-    // Debounce: Check if we synced recently (within last 5 minutes)
-    if (lastSyncTime) {
-      const timeSinceLastSync = Date.now() - new Date(lastSyncTime).getTime();
-      const fiveMinutes = 5 * 60 * 1000;
-
-      if (timeSinceLastSync < fiveMinutes) {
-        const minutesRemaining = Math.ceil((fiveMinutes - timeSinceLastSync) / 60000);
-        setError(`Please wait ${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''} before syncing again`);
+    try {
+      if (!isIOS) {
+        setError('Apple Health is only available on iOS devices');
         return false;
       }
-    }
 
-    try {
+      if (!hasPermissions) {
+        const granted = await requestPermissions();
+        if (!granted) return false;
+      }
+
+      // Debounce: Check if we synced recently (within last 5 minutes)
+      if (lastSyncTime) {
+        const timeSinceLastSync = Date.now() - new Date(lastSyncTime).getTime();
+        const fiveMinutes = 5 * 60 * 1000;
+
+        if (timeSinceLastSync < fiveMinutes) {
+          const minutesRemaining = Math.ceil((fiveMinutes - timeSinceLastSync) / 60000);
+          setError(`Please wait ${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''} before syncing again`);
+          return false;
+        }
+      }
+
       setLoading(true);
       setError(null);
 
@@ -156,28 +156,16 @@ export const useHealthData = () => {
         stepsData = stepsResult.samples || stepsResult || [];
       } catch (stepsError) {
         console.error('Error querying steps data:', stepsError);
-        // Continue with weight data even if steps fail
-        setError('Warning: Could not sync steps data. Weight data will still be synced.');
+        // Continue even if steps fail
+        setError('Warning: Could not sync steps data.');
       }
 
       // Query weight data with error handling
-      // Weight is a discrete data type, so we need to use discreteAverage operation
+      // Note: The @capgo/capacitor-health plugin does not support querying discrete
+      // data types like weight with queryAggregated (it only supports cumulative data)
+      // Weight must be entered manually for now
       let weightData = [];
-      try {
-        const weightResult = await Health.queryAggregated({
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          dataType: 'weight',
-          interval: 'day',
-          operation: 'discreteAverage'
-        });
-
-        weightData = weightResult.samples || weightResult || [];
-        console.log('Weight data retrieved:', weightData.length, 'entries');
-      } catch (weightError) {
-        console.error('Error querying weight data:', weightError);
-        setError('Warning: Could not sync weight data from Apple Health. You can add weight manually.');
-      }
+      console.log('Weight sync not supported by plugin - manual entry only');
 
       // Transform data to match database schema
       const transformedData = {};
@@ -272,6 +260,7 @@ export const useHealthData = () => {
       setError(errorMessage);
       return false;
     } finally {
+      // Always clear loading state, no matter what
       setLoading(false);
     }
   }, [isIOS, hasPermissions, requestPermissions, lastSyncTime]);

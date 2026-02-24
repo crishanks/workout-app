@@ -29,15 +29,28 @@ export const HealthProgress = ({ onBack }) => {
     setSyncing(true);
     setSyncMessage(null);
 
-    const success = await syncFromAppleHealth();
+    // Safety timeout: if sync takes more than 30 seconds, stop the UI
+    const timeoutId = setTimeout(() => {
+      setSyncing(false);
+      setSyncMessage({ type: 'error', text: 'Sync timed out. Please try again.' });
+    }, 30000);
 
-    if (success) {
-      setSyncMessage({ type: 'success', text: 'Data synced successfully!' });
-    } else {
-      setSyncMessage({ type: 'error', text: error || 'Failed to sync data' });
+    try {
+      const success = await syncFromAppleHealth();
+
+      clearTimeout(timeoutId);
+
+      if (success) {
+        setSyncMessage({ type: 'success', text: 'Data synced successfully!' });
+      } else {
+        setSyncMessage({ type: 'error', text: error || 'Failed to sync data' });
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      setSyncMessage({ type: 'error', text: 'An error occurred during sync' });
+    } finally {
+      setSyncing(false);
     }
-
-    setSyncing(false);
 
     // Clear message after 3 seconds
     setTimeout(() => setSyncMessage(null), 3000);
