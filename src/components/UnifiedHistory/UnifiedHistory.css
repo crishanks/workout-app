@@ -24,24 +24,27 @@
 .unified-history-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 1rem;
   background-color: #8b5cf6;
   border-bottom: 1px solid #a78bfa;
   position: sticky;
   top: 0;
   z-index: 10;
+  min-height: 60px;
 }
 
 .unified-history-header h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  flex: 1;
   text-align: center;
   color: #ffffff;
 }
 
 .back-button {
+  position: absolute;
+  left: 1rem;
   background: none;
   border: none;
   color: #ffffff;
@@ -184,6 +187,7 @@
 
 /* Touch-friendly button sizes */
 @media (hover: none) and (pointer: coarse) {
+
   .back-button,
   .tab-button {
     min-height: 44px;

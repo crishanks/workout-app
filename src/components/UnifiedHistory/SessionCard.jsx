@@ -59,16 +59,16 @@ const SessionCard = ({ session, healthMetrics, isFirstWeek, onEdit, onDelete }) 
           <span className="metric-label">Weekly Steps</span>
           <div className="metric-value-container">
             <span className="metric-value">{healthMetrics.steps.total.toLocaleString()}</span>
-            <span className={`step-goal-indicator ${
-              healthMetrics.steps.goalStatus === 'achieved' ? 'goal-met' : 
+            <span className={`step-goal-indicator ${healthMetrics.steps.goalStatus === 'achieved' ? 'goal-met' :
               healthMetrics.steps.goalStatus === 'on-track' ? 'on-track' :
-              healthMetrics.steps.goalStatus === 'behind' ? 'behind' :
-              'goal-missed'
-            }`}>
-              {healthMetrics.steps.goalStatus === 'achieved' && '✓ Goal Achieved'}
-              {healthMetrics.steps.goalStatus === 'missed' && '✗ Goal Missed'}
-              {healthMetrics.steps.goalStatus === 'on-track' && '→ On Track'}
-              {healthMetrics.steps.goalStatus === 'behind' && '⚠ Behind'}
+                healthMetrics.steps.goalStatus === 'behind' ? 'behind' :
+                  'goal-missed'
+              }`}>
+              {healthMetrics.steps.goalStatus === 'achieved' ? '✓ Goal Achieved' :
+                healthMetrics.steps.goalStatus === 'missed' ? '✗ Goal Missed' :
+                  healthMetrics.steps.goalStatus === 'on-track' ? '→ On Track' :
+                    healthMetrics.steps.goalStatus === 'behind' ? '⚠ Behind' :
+                      '✗ Goal Missed'}
             </span>
           </div>
         </div>
@@ -87,8 +87,8 @@ const SessionCard = ({ session, healthMetrics, isFirstWeek, onEdit, onDelete }) 
       </section>
 
       <footer className="session-actions">
-        <button 
-          className="action-button edit-button" 
+        <button
+          className="action-button edit-button"
           onClick={onEdit}
           aria-label={`Edit workout from ${formattedDate}`}
         >
@@ -98,8 +98,8 @@ const SessionCard = ({ session, healthMetrics, isFirstWeek, onEdit, onDelete }) 
           </svg>
           Edit
         </button>
-        <button 
-          className="action-button delete-button" 
+        <button
+          className="action-button delete-button"
           onClick={onDelete}
           aria-label={`Delete workout from ${formattedDate}`}
         >

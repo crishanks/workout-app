@@ -9,54 +9,48 @@ const TimelineView = ({
   onRoundSelect,
   onEditSession,
   onDeleteSession,
-  getWeeklyHealthMetrics
+  getWeeklyHealthMetrics,
+  roundManager
 }) => {
-  // Helper function to calculate week date range (Monday to Sunday)
-  const getWeekDateRange = (sessionDate) => {
-    const date = new Date(sessionDate);
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  // Helper function to calculate week date range based on round start date and week number
+  const getWeekDateRangeFromRoundWeek = (round, week) => {
+    // Get the round start date from roundManager
+    // For now, we'll calculate based on the first session in that round/week
+    // This is a fallback - ideally we'd have the round start date
+    const roundSessions = workoutHistory.filter(s => s.round === round);
+    if (roundSessions.length === 0) {
+      return null;
+    }
     
-    // Calculate Monday of the week
-    const monday = new Date(date);
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days
-    monday.setDate(date.getDate() - daysToMonday);
-    monday.setHours(0, 0, 0, 0);
+    // Sort by date to find the earliest session in this round
+    const sortedSessions = [...roundSessions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const roundStartDate = new Date(sortedSessions[0].date);
     
-    // Calculate Sunday of the week
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
+    // Calculate the start of the requested week
+    // Week 1 starts on round start date, Week 2 starts 7 days later, etc.
+    const weekStartDate = new Date(roundStartDate);
+    weekStartDate.setDate(roundStartDate.getDate() + ((week - 1) * 7));
+    weekStartDate.setHours(0, 0, 0, 0);
+    
+    // Calculate the end of the week (6 days later, at 23:59:59)
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekStartDate.getDate() + 6);
+    weekEndDate.setHours(23, 59, 59, 999);
     
     return {
-      start: monday.toISOString().split('T')[0],
-      end: sunday.toISOString().split('T')[0]
+      start: weekStartDate.toISOString().split('T')[0],
+      end: weekEndDate.toISOString().split('T')[0]
     };
   };
 
   // Helper function to get previous week date range
-  const getPreviousWeekDateRange = (sessionDate) => {
-    const date = new Date(sessionDate);
-    const dayOfWeek = date.getDay();
+  const getPreviousWeekDateRange = (round, week) => {
+    if (week === 1) {
+      // No previous week for week 1
+      return null;
+    }
     
-    // Calculate Monday of current week
-    const monday = new Date(date);
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    monday.setDate(date.getDate() - daysToMonday);
-    
-    // Calculate previous Monday (7 days before)
-    const prevMonday = new Date(monday);
-    prevMonday.setDate(monday.getDate() - 7);
-    prevMonday.setHours(0, 0, 0, 0);
-    
-    // Calculate previous Sunday
-    const prevSunday = new Date(prevMonday);
-    prevSunday.setDate(prevMonday.getDate() + 6);
-    prevSunday.setHours(23, 59, 59, 999);
-    
-    return {
-      start: prevMonday.toISOString().split('T')[0],
-      end: prevSunday.toISOString().split('T')[0]
-    };
+    return getWeekDateRangeFromRoundWeek(round, week - 1);
   };
   // Group sessions by round and week, sorted chronologically (most recent first)
   const groupedSessions = useMemo(() => {
@@ -168,19 +162,19 @@ const TimelineView = ({
               </header>
               <div className="sessions-list">
                 {group.sessions.map(session => {
-                  // Calculate week date range for this session
-                  const weekRange = getWeekDateRange(session.date);
+                  // Calculate week date range based on round and week number
+                  const weekRange = getWeekDateRangeFromRoundWeek(session.round, session.week);
                   
                   // Get previous week range for weight change calculation
-                  const prevWeekRange = getPreviousWeekDateRange(session.date);
+                  const prevWeekRange = isFirstWeekOfRound ? null : getPreviousWeekDateRange(session.round, session.week);
                   
                   // Get health metrics for this session's week
-                  const healthMetrics = getWeeklyHealthMetrics(
+                  const healthMetrics = weekRange ? getWeeklyHealthMetrics(
                     weekRange.start,
                     weekRange.end,
-                    isFirstWeekOfRound ? null : prevWeekRange.start,
-                    isFirstWeekOfRound ? null : prevWeekRange.end
-                  );
+                    prevWeekRange?.start || null,
+                    prevWeekRange?.end || null
+                  ) : { weight: null, steps: { total: 0, goalMet: false, goalStatus: 'missed', percentageOfGoal: 0 } };
                   
                   return (
                     <SessionCard

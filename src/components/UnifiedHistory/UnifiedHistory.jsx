@@ -176,6 +176,7 @@ const UnifiedHistory = ({ onBack }) => {
                   onEditSession={handleEditSession}
                   onDeleteSession={handleDeleteSession}
                   getWeeklyHealthMetrics={getWeeklyHealthMetrics}
+                  roundManager={roundManager}
                 />
               </section>
             )}

@@ -678,7 +678,11 @@ export const useHealthData = () => {
       steps: {
         total: stepsData.totalSteps,
         goalMet: stepsData.goalMet,
-        percentageOfGoal: stepsData.percentageOfGoal
+        goalStatus: stepsData.goalStatus,
+        percentageOfGoal: stepsData.percentageOfGoal,
+        isWeekComplete: stepsData.isWeekComplete,
+        daysElapsed: stepsData.daysElapsed,
+        expectedSteps: stepsData.expectedSteps
       }
     };
   }, [getWeeklySteps, getWeeklyAverageWeight]);
