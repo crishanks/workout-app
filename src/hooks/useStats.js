@@ -40,6 +40,7 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
       new Date(s.date) >= fourWeeksAgo && s.exercises.length > 0
     );
 
+    // If no old sessions or no recent sessions, return default score
     if (oldSessions.length === 0 || recentSessions.length === 0) return 70;
 
     const oldVolume = oldSessions.reduce((sum, session) => 
@@ -51,6 +52,9 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
 
     const avgOldVolume = oldVolume / oldSessions.length;
     const avgRecentVolume = recentVolume / recentSessions.length;
+    
+    // Avoid division by zero
+    if (avgOldVolume === 0) return 70;
     
     if (avgRecentVolume > avgOldVolume * 1.05) return 100;
     if (avgRecentVolume > avgOldVolume * 0.95) return 70;
@@ -64,34 +68,46 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
 
     if (sortedSessions.length === 0) return 0;
 
-    let streak = 1; // Start with 1 for the most recent workout
-    let currentDate = new Date(sortedSessions[0].date);
-    currentDate.setHours(0, 0, 0, 0);
+    // Get the most recent workout date
+    const mostRecentDate = new Date(sortedSessions[0].date);
+    mostRecentDate.setHours(0, 0, 0, 0);
+    
+    // Check if the most recent workout is within the last 2 days (to consider it active)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysSinceLastWorkout = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceLastWorkout > 2) {
+      // Streak is broken if no workout in the last 2 days
+      return 0;
+    }
+
+    // Find the start of the streak by going backwards
+    let streakStartDate = mostRecentDate;
+    let currentCheckDate = new Date(mostRecentDate);
     
     for (let i = 1; i < sortedSessions.length; i++) {
       const sessionDate = new Date(sortedSessions[i].date);
       sessionDate.setHours(0, 0, 0, 0);
       
-      const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor((currentCheckDate - sessionDate) / (1000 * 60 * 60 * 24));
       
-      // Allow for 1-2 day gaps (accounting for rest days)
-      // If gap is 1 or 2 days, continue the streak
-      if (daysDiff >= 1 && daysDiff <= 2) {
-        streak++;
-        currentDate = sessionDate;
-      } else if (daysDiff === 0) {
-        // Same day, don't increment streak but continue checking
-        continue;
-      } else {
-        // Gap is too large, break the streak
+      // If gap is more than 2 days, streak is broken
+      if (daysDiff > 2) {
         break;
       }
+      
+      // Update streak start date and continue checking
+      streakStartDate = sessionDate;
+      currentCheckDate = sessionDate;
     }
 
-    // Return the actual streak count as a percentage for scoring
-    // But we'll need to update the display to show the actual number
-    if (streak >= 7) return 100;
-    if (streak >= 3) return (streak / 7) * 100;
+    // Calculate total calendar days in the streak (from start to today)
+    const streakDays = Math.floor((today - streakStartDate) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Return percentage for scoring
+    if (streakDays >= 7) return 100;
+    if (streakDays >= 3) return (streakDays / 7) * 100;
     return 0;
   };
 
@@ -102,30 +118,44 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
 
     if (sortedSessions.length === 0) return 0;
 
-    let streak = 1; // Start with 1 for the most recent workout
-    let currentDate = new Date(sortedSessions[0].date);
-    currentDate.setHours(0, 0, 0, 0);
+    // Get the most recent workout date
+    const mostRecentDate = new Date(sortedSessions[0].date);
+    mostRecentDate.setHours(0, 0, 0, 0);
+    
+    // Check if the most recent workout is within the last 2 days (to consider it active)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysSinceLastWorkout = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceLastWorkout > 2) {
+      // Streak is broken if no workout in the last 2 days
+      return 0;
+    }
+
+    // Find the start of the streak by going backwards
+    let streakStartDate = mostRecentDate;
+    let currentCheckDate = new Date(mostRecentDate);
     
     for (let i = 1; i < sortedSessions.length; i++) {
       const sessionDate = new Date(sortedSessions[i].date);
       sessionDate.setHours(0, 0, 0, 0);
       
-      const daysDiff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor((currentCheckDate - sessionDate) / (1000 * 60 * 60 * 24));
       
-      // Allow for 1-2 day gaps (accounting for rest days)
-      if (daysDiff >= 1 && daysDiff <= 2) {
-        streak++;
-        currentDate = sessionDate;
-      } else if (daysDiff === 0) {
-        // Same day, don't increment streak but continue checking
-        continue;
-      } else {
-        // Gap is too large, break the streak
+      // If gap is more than 2 days, streak is broken
+      if (daysDiff > 2) {
         break;
       }
+      
+      // Update streak start date and continue checking
+      streakStartDate = sessionDate;
+      currentCheckDate = sessionDate;
     }
 
-    return streak;
+    // Calculate total calendar days in the streak (from start to today)
+    const streakDays = Math.floor((today - streakStartDate) / (1000 * 60 * 60 * 24)) + 1;
+
+    return streakDays;
   };
 
   const getStepGoalScore = () => {
