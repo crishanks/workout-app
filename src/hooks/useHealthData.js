@@ -161,26 +161,10 @@ export const useHealthData = () => {
       }
 
       // Query weight data with error handling
+      // Weight is a discrete data type, so we can't use queryAggregated with cumulative sum
+      // For now, we'll skip weight and only sync steps
       let weightData = [];
-      try {
-        // Use queryAggregated for weight as well, with 'day' interval
-        const weightResult = await Health.queryAggregated({
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          dataType: 'weight',
-          interval: 'day'
-        });
-
-        // queryAggregated returns { samples: [...] }
-        weightData = weightResult.samples || weightResult || [];
-      } catch (weightError) {
-        console.error('Error querying weight data:', weightError);
-        // If both failed, throw error
-        if (stepsData.length === 0) {
-          throw new Error('Could not sync any health data. Please check your Apple Health permissions and try again.');
-        }
-        setError('Warning: Could not sync weight data. Steps data will still be synced.');
-      }
+      console.log('Weight sync not yet implemented - steps only for now');
 
       // Transform data to match database schema
       const transformedData = {};
