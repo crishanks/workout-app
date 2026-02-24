@@ -1,6 +1,10 @@
 .rest-day {
   text-align: center;
   padding: 4rem 1rem;
+  /* iOS safe area support */
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(4rem, calc(4rem + env(safe-area-inset-bottom)));
 }
 
 .rest-day h2 {

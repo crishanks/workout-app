@@ -29,7 +29,7 @@
 
 .help-header {
   background: var(--bg-secondary);
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -38,10 +38,14 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  /* iOS safe area support */
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 .help-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   text-align: center;
   color: var(--text-primary);
   font-weight: 700;
@@ -83,6 +87,9 @@
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+  /* iOS safe area horizontal padding */
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 .help-category-container {
@@ -109,6 +116,10 @@
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+  /* iOS safe area support */
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, calc(1rem + env(safe-area-inset-bottom)));
 }
 
 .help-placeholder {

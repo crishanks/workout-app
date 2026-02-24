@@ -10,6 +10,9 @@
   margin: 0 auto;
   background: white;
   transition: padding-bottom 0.3s ease;
+  /* iOS safe area horizontal padding */
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
 }
 
 .content.has-expanded-exercise {
@@ -43,6 +46,9 @@
   right: 1rem;
   z-index: 1000;
   width: fit-content;
+  /* iOS safe area - ensure buttons are above bottom safe area */
+  bottom: max(2rem, calc(2rem + env(safe-area-inset-bottom)));
+  right: max(1rem, env(safe-area-inset-right));
 }
 
 .history-btn,

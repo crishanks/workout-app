@@ -23,6 +23,11 @@ export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canR
 
   return (
     <header className="header">
+      <div className="header-left">
+        <button className="header-help-btn" onClick={onHelpClick} title="Help & Reference">
+          <HelpCircle size={20} strokeWidth={2} />
+        </button>
+      </div>
       <div className="header-content">
         <h1>Shreddit</h1>
         <div className="round-info">
@@ -36,13 +41,10 @@ export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canR
           )}
         </div>
       </div>
-      <div className="header-buttons">
-        <button className="header-help-btn" onClick={onHelpClick} title="Help & Reference">
-          <HelpCircle size={22} strokeWidth={2} />
-        </button>
+      <div className="header-right">
         {canRestart && (
           <button className="header-restart-btn" onClick={onRestart} title="Restart Round">
-            <RotateCcw size={22} strokeWidth={2} />
+            <RotateCcw size={20} strokeWidth={2} />
           </button>
         )}
       </div>

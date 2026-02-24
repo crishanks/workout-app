@@ -6,11 +6,16 @@
   padding: 20px 0.75rem;
   gap: 0.5rem;
   position: sticky;
-  top: 78px;
+  /* Adjust top position to account for header height + iOS safe area */
+  /* Header content (~100px) + safe area top */
+  top: calc(100px + env(safe-area-inset-top));
   z-index: 99;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   border-bottom: 1px solid var(--border-color);
+  /* iOS safe area horizontal padding */
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
 }
 
 .day-tabs::-webkit-scrollbar {

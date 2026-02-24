@@ -4,31 +4,42 @@
 }
 
 .show-form-btn {
-  background: var(--primary-color, #007bff);
+  background: var(--accent-primary);
   color: white;
-  border: none;
+  border: 1px solid var(--accent-primary);
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
 }
 
 .show-form-btn:hover {
-  background: var(--primary-hover, #0056b3);
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.show-form-btn:active {
+  background: var(--accent-secondary);
+  transform: scale(0.98);
 }
 
 .manual-entry-form {
-  background: var(--card-bg, #f8f9fa);
-  border-radius: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
   padding: 1.5rem;
   margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .manual-entry-form h3 {
   margin: 0 0 1.5rem 0;
   font-size: 1.25rem;
-  color: var(--text-primary, #333);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .form-group {
@@ -38,40 +49,48 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-primary, #333);
+  font-weight: 600;
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary-color, #007bff);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-group input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .field-hint {
   display: block;
   margin-top: 0.25rem;
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 
 .form-error {
-  background: #fee;
-  color: #c33;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 1rem;
   font-size: 0.9rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .form-actions {
@@ -84,33 +103,51 @@
 .submit-btn {
   flex: 1;
   padding: 0.75rem;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .cancel-btn {
-  background: var(--secondary-bg, #e9ecef);
-  color: var(--text-primary, #333);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .cancel-btn:hover:not(:disabled) {
-  background: var(--secondary-hover, #dee2e6);
+  background: #3a3a3a;
+  border-color: #3a3a3a;
+}
+
+.cancel-btn:active:not(:disabled) {
+  background: var(--bg-primary);
+  transform: scale(0.98);
 }
 
 .submit-btn {
-  background: var(--primary-color, #007bff);
+  background: var(--accent-primary);
   color: white;
+  border-color: var(--accent-primary);
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: var(--primary-hover, #0056b3);
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.submit-btn:active:not(:disabled) {
+  background: var(--accent-secondary);
+  transform: scale(0.98);
 }
 
 .cancel-btn:disabled,
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border-color: var(--border-color);
 }

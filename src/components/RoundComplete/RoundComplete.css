@@ -3,6 +3,10 @@
   align-items: center;
   justify-content: center;
   min-height: 60vh;
+  /* iOS safe area support */
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, calc(1rem + env(safe-area-inset-bottom)));
 }
 
 .round-complete-card {
