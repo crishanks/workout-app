@@ -1,6 +1,7 @@
 header.header {
   background: var(--bg-secondary);
   padding: 1.25rem 1rem;
+  padding-top: calc(env(safe-area-inset-top) + 1.25rem);
   position: sticky;
   top: 0;
   z-index: 100;

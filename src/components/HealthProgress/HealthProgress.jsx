@@ -66,12 +66,12 @@ export const HealthProgress = ({ onBack }) => {
 
   const handleManualEntry = async (date, steps, weight) => {
     const success = await addManualEntry(date, steps, weight);
-    
+
     if (success) {
       setSyncMessage({ type: 'success', text: 'Entry added successfully!' });
       setTimeout(() => setSyncMessage(null), 3000);
     }
-    
+
     return success;
   };
 
@@ -82,22 +82,22 @@ export const HealthProgress = ({ onBack }) => {
   const weeklyStepsData = useMemo(() => {
     const weeks = [];
     const today = new Date();
-    
+
     for (let i = 11; i >= 0; i--) {
       const endDate = new Date(today);
       endDate.setDate(endDate.getDate() - (i * 7));
-      
+
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 6);
-      
+
       const weekData = getWeeklySteps(
         startDate.toISOString().split('T')[0],
         endDate.toISOString().split('T')[0]
       );
-      
+
       weeks.push(weekData);
     }
-    
+
     return weeks;
   }, [healthData]);
 
@@ -107,10 +107,10 @@ export const HealthProgress = ({ onBack }) => {
     const dayOfWeek = today.getDay();
     const monday = new Date(today);
     monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    
+
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    
+
     return getWeeklySteps(
       monday.toISOString().split('T')[0],
       sunday.toISOString().split('T')[0]
@@ -126,8 +126,8 @@ export const HealthProgress = ({ onBack }) => {
         <header className="health-header" role="banner">
           <h1>Health Progress</h1>
           <div className="health-header-actions">
-            <button 
-              className="back-btn" 
+            <button
+              className="back-btn"
               onClick={onBack}
               aria-label="Go back to main screen"
             >
@@ -150,8 +150,8 @@ export const HealthProgress = ({ onBack }) => {
               <li>Track weekly step goals (60,000 steps/week)</li>
               <li>See health metrics alongside your workouts</li>
             </ul>
-            <button 
-              className="permission-btn" 
+            <button
+              className="permission-btn"
               onClick={handleRequestPermissions}
               aria-label="Grant access to Apple Health data"
             >
@@ -170,8 +170,8 @@ export const HealthProgress = ({ onBack }) => {
         <header className="health-header" role="banner">
           <h1>Health Progress</h1>
           <div className="health-header-actions">
-            <button 
-              className="back-btn" 
+            <button
+              className="back-btn"
               onClick={onBack}
               aria-label="Go back to main screen"
             >
@@ -183,13 +183,13 @@ export const HealthProgress = ({ onBack }) => {
           <div className="platform-message" role="region" aria-labelledby="platform-heading">
             <h3 id="platform-heading">Manual Entry Mode</h3>
             <p>
-              Apple Health integration is only available on iOS devices. 
+              Apple Health integration is only available on iOS devices.
               You can manually enter your health data below.
             </p>
           </div>
 
           {syncMessage && (
-            <div 
+            <div
               className={`sync-message ${syncMessage.type}`}
               role="alert"
               aria-live="polite"
@@ -198,7 +198,7 @@ export const HealthProgress = ({ onBack }) => {
             </div>
           )}
 
-          <ManualEntryForm 
+          <ManualEntryForm
             onSubmit={handleManualEntry}
             loading={loading}
             error={error}
@@ -235,16 +235,16 @@ export const HealthProgress = ({ onBack }) => {
       <header className="health-header" role="banner">
         <h1>Health Progress</h1>
         <div className="health-header-actions">
-          <button 
-            className="back-btn" 
+          <button
+            className="back-btn"
             onClick={onBack}
             aria-label="Go back to main screen"
           >
             ← Back
           </button>
           {isIOS && hasPermissions && (
-            <button 
-              className="sync-btn" 
+            <button
+              className="sync-btn"
               onClick={handleSync}
               disabled={syncing}
               aria-label={syncing ? 'Syncing health data' : 'Sync health data from Apple Health'}
@@ -259,7 +259,7 @@ export const HealthProgress = ({ onBack }) => {
 
       <main className="health-content" role="main">
         {syncMessage && (
-          <div 
+          <div
             className={`sync-message ${syncMessage.type}`}
             role="alert"
             aria-live="polite"
@@ -277,10 +277,7 @@ export const HealthProgress = ({ onBack }) => {
         {/* Manual entry form for weight (since Apple Health weight sync is not available) */}
         <div className="manual-entry-section">
           <h3>Add Weight Entry</h3>
-          <p className="manual-entry-note">
-            Weight data must be entered manually. Steps sync automatically from Apple Health.
-          </p>
-          <ManualEntryForm 
+          <ManualEntryForm
             onSubmit={handleManualEntry}
             loading={loading}
             error={error}
@@ -294,9 +291,9 @@ export const HealthProgress = ({ onBack }) => {
             <p>
               Sync your Apple Health data to see your progress.
             </p>
-            <button 
-              className="sync-btn-large" 
-              onClick={handleSync} 
+            <button
+              className="sync-btn-large"
+              onClick={handleSync}
               disabled={syncing}
               aria-label={syncing ? 'Syncing health data' : 'Sync health data now'}
               aria-busy={syncing}
