@@ -5,6 +5,7 @@ import { WeightChart } from './WeightChart';
 import { WeightSummary } from './WeightSummary';
 import { WeeklyStepsChart } from './WeeklyStepsChart';
 import { CurrentWeekSteps } from './CurrentWeekSteps';
+import { ManualEntryForm } from './ManualEntryForm';
 import './HealthProgress.css';
 
 export const HealthProgress = ({ onBack }) => {
@@ -13,6 +14,7 @@ export const HealthProgress = ({ onBack }) => {
     loading,
     error,
     syncFromAppleHealth,
+    addManualEntry,
     hasPermissions,
     requestPermissions,
     isIOS,
@@ -47,6 +49,17 @@ export const HealthProgress = ({ onBack }) => {
       setSyncMessage({ type: 'success', text: 'Permissions granted! Syncing data...' });
       setTimeout(() => handleSync(), 500);
     }
+  };
+
+  const handleManualEntry = async (date, steps, weight) => {
+    const success = await addManualEntry(date, steps, weight);
+    
+    if (success) {
+      setSyncMessage({ type: 'success', text: 'Entry added successfully!' });
+      setTimeout(() => setSyncMessage(null), 3000);
+    }
+    
+    return success;
   };
 
   // Calculate weight progress
@@ -139,14 +152,46 @@ export const HealthProgress = ({ onBack }) => {
         </header>
         <main className="health-content">
           <div className="platform-message">
-            <h3>iOS Only Feature</h3>
+            <h3>Manual Entry Mode</h3>
             <p>
-              Apple Health integration is only available on iOS devices.
-            </p>
-            <p className="platform-hint">
-              Manual data entry will be available in a future update.
+              Apple Health integration is only available on iOS devices. 
+              You can manually enter your health data below.
             </p>
           </div>
+
+          {syncMessage && (
+            <div className={`sync-message ${syncMessage.type}`}>
+              {syncMessage.text}
+            </div>
+          )}
+
+          <ManualEntryForm 
+            onSubmit={handleManualEntry}
+            loading={loading}
+            error={error}
+          />
+
+          {hasData && (
+            <>
+              <section className="health-section weight-section">
+                <h2>Weight Progress</h2>
+                <WeightChart data={weightProgress.entries} />
+                <WeightSummary weightProgress={weightProgress} />
+              </section>
+
+              <section className="health-section steps-section">
+                <h2>Steps Progress</h2>
+                <WeeklyStepsChart data={weeklyStepsData} />
+                <CurrentWeekSteps stepsData={currentWeekSteps} />
+              </section>
+            </>
+          )}
+
+          {!hasData && !loading && (
+            <div className="no-data-message">
+              <p>No health data yet. Add your first entry above to get started!</p>
+            </div>
+          )}
         </main>
       </div>
     );

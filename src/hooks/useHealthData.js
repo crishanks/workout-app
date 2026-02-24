@@ -97,20 +97,37 @@ export const useHealthData = () => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - (12 * 7)); // 12 weeks ago
 
-      // Query steps data
-      const stepsData = await Health.queryAggregated({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        dataType: 'steps',
-        interval: 'day'
-      });
+      // Query steps data with error handling
+      let stepsData = [];
+      try {
+        stepsData = await Health.queryAggregated({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          dataType: 'steps',
+          interval: 'day'
+        });
+      } catch (stepsError) {
+        console.error('Error querying steps data:', stepsError);
+        // Continue with weight data even if steps fail
+        setError('Warning: Could not sync steps data. Weight data will still be synced.');
+      }
 
-      // Query weight data
-      const weightData = await Health.query({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        dataType: 'weight'
-      });
+      // Query weight data with error handling
+      let weightData = [];
+      try {
+        weightData = await Health.query({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          dataType: 'weight'
+        });
+      } catch (weightError) {
+        console.error('Error querying weight data:', weightError);
+        // If both failed, throw error
+        if (stepsData.length === 0) {
+          throw new Error('Could not sync any health data. Please check your Apple Health permissions and try again.');
+        }
+        setError('Warning: Could not sync weight data. Steps data will still be synced.');
+      }
 
       // Transform data to match database schema
       const transformedData = {};
@@ -119,10 +136,18 @@ export const useHealthData = () => {
       if (stepsData && stepsData.length > 0) {
         stepsData.forEach(entry => {
           const date = new Date(entry.startDate).toISOString().split('T')[0];
-          if (!transformedData[date]) {
-            transformedData[date] = { date, steps: null, weight: null };
+          const steps = Math.round(entry.value);
+          
+          // Validate steps data before adding
+          const validation = validateHealthData(steps, null);
+          if (validation.isValid) {
+            if (!transformedData[date]) {
+              transformedData[date] = { date, steps: null, weight: null };
+            }
+            transformedData[date].steps = steps;
+          } else {
+            console.warn(`Invalid steps data for ${date}: ${steps}`, validation.errors);
           }
-          transformedData[date].steps = Math.round(entry.value);
         });
       }
 
@@ -132,12 +157,19 @@ export const useHealthData = () => {
         weightData.forEach(entry => {
           const date = new Date(entry.startDate).toISOString().split('T')[0];
           const timestamp = new Date(entry.startDate).getTime();
+          const weight = parseFloat(entry.value.toFixed(2));
           
-          if (!weightByDate[date] || timestamp > weightByDate[date].timestamp) {
-            weightByDate[date] = {
-              value: entry.value,
-              timestamp: timestamp
-            };
+          // Validate weight data before adding
+          const validation = validateHealthData(null, weight);
+          if (validation.isValid) {
+            if (!weightByDate[date] || timestamp > weightByDate[date].timestamp) {
+              weightByDate[date] = {
+                value: weight,
+                timestamp: timestamp
+              };
+            }
+          } else {
+            console.warn(`Invalid weight data for ${date}: ${weight}`, validation.errors);
           }
         });
 
@@ -146,24 +178,48 @@ export const useHealthData = () => {
           if (!transformedData[date]) {
             transformedData[date] = { date, steps: null, weight: null };
           }
-          transformedData[date].weight = parseFloat(weightByDate[date].value.toFixed(2));
+          transformedData[date].weight = weightByDate[date].value;
         });
       }
 
       // Convert to array
       const healthDataArray = Object.values(transformedData);
 
-      // Save to Supabase
-      await saveHealthDataToSupabase(healthDataArray);
+      if (healthDataArray.length === 0) {
+        setError('No health data found. Make sure you have steps or weight data in Apple Health.');
+        return false;
+      }
+
+      // Save to Supabase with network error handling
+      try {
+        await saveHealthDataToSupabase(healthDataArray);
+      } catch (saveError) {
+        // Data was retrieved but couldn't be saved
+        throw new Error('Health data retrieved but could not be saved. Please check your internet connection and try again.');
+      }
 
       // Update local state
-      setHealthData(healthDataArray);
+      await fetchHealthData();
       setLastSyncTime(new Date().toISOString());
 
       return true;
     } catch (err) {
       console.error('Error syncing from Apple Health:', err);
-      setError('Failed to sync from Apple Health: ' + err.message);
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to sync health data. ';
+      
+      if (err.message.includes('network') || err.message.includes('internet')) {
+        errorMessage += 'Please check your internet connection and try again.';
+      } else if (err.message.includes('permission')) {
+        errorMessage += 'Please check your Apple Health permissions in Settings.';
+      } else if (err.message.includes('saved')) {
+        errorMessage = err.message;
+      } else {
+        errorMessage += err.message || 'Please try again later.';
+      }
+      
+      setError(errorMessage);
       return false;
     } finally {
       setLoading(false);
@@ -193,17 +249,36 @@ export const useHealthData = () => {
         });
 
       if (upsertError) {
-        throw upsertError;
+        // Check for specific Supabase errors
+        if (upsertError.code === 'PGRST116') {
+          throw new Error('Database table not found. Please contact support.');
+        } else if (upsertError.code === '23505') {
+          throw new Error('Duplicate data detected. Please try syncing again.');
+        } else if (upsertError.message.includes('JWT')) {
+          throw new Error('Authentication error. Please restart the app and try again.');
+        } else if (upsertError.message.includes('network')) {
+          throw new Error('Network error. Please check your internet connection.');
+        } else {
+          throw new Error(`Database error: ${upsertError.message}`);
+        }
       }
     } catch (err) {
       console.error('Error saving to Supabase:', err);
-      // Retry logic: store failed data for retry
+      
+      // Store failed data for retry
       const failedData = {
         data: dataArray,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        error: err.message
       };
       localStorage.setItem('health-data-retry', JSON.stringify(failedData));
-      throw new Error('Failed to save health data: ' + err.message);
+      
+      // Re-throw with user-friendly message
+      if (err.message.includes('Network') || err.message.includes('network')) {
+        throw new Error('Could not save data due to network issues. Data will be retried automatically.');
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -234,7 +309,16 @@ export const useHealthData = () => {
         .order('date', { ascending: false });
 
       if (fetchError) {
-        throw fetchError;
+        // Handle specific Supabase errors
+        if (fetchError.code === 'PGRST116') {
+          throw new Error('Database table not found. Please contact support.');
+        } else if (fetchError.message.includes('JWT')) {
+          throw new Error('Authentication error. Please restart the app.');
+        } else if (fetchError.message.includes('network')) {
+          throw new Error('Network error. Please check your internet connection.');
+        } else {
+          throw new Error(`Failed to load health data: ${fetchError.message}`);
+        }
       }
 
       setHealthData(data || []);
@@ -243,7 +327,7 @@ export const useHealthData = () => {
       await retryFailedSaves();
     } catch (err) {
       console.error('Error fetching health data:', err);
-      setError('Failed to load health data: ' + err.message);
+      setError(err.message || 'Failed to load health data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -253,6 +337,42 @@ export const useHealthData = () => {
   useEffect(() => {
     fetchHealthData();
   }, [fetchHealthData]);
+
+  // Validate health data values
+  const validateHealthData = (steps, weight) => {
+    const errors = [];
+
+    // Validate steps if provided
+    if (steps !== null && steps !== undefined) {
+      const stepsNum = typeof steps === 'string' ? parseInt(steps, 10) : steps;
+      
+      if (isNaN(stepsNum)) {
+        errors.push('Steps must be a valid number');
+      } else if (stepsNum < 0) {
+        errors.push('Steps cannot be negative');
+      } else if (stepsNum > 200000) {
+        errors.push('Steps value seems unreasonably high (max: 200,000)');
+      }
+    }
+
+    // Validate weight if provided
+    if (weight !== null && weight !== undefined) {
+      const weightNum = typeof weight === 'string' ? parseFloat(weight) : weight;
+      
+      if (isNaN(weightNum)) {
+        errors.push('Weight must be a valid number');
+      } else if (weightNum < 50) {
+        errors.push('Weight value seems unreasonably low (min: 50 lbs)');
+      } else if (weightNum > 1000) {
+        errors.push('Weight value seems unreasonably high (max: 1000 lbs)');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
 
   // Add manual entry for non-iOS platforms
   const addManualEntry = useCallback(async (date, steps, weight) => {
@@ -265,32 +385,40 @@ export const useHealthData = () => {
         throw new Error('Date is required');
       }
 
-      // Validate steps (if provided)
-      if (steps !== null && steps !== undefined) {
-        const stepsNum = parseInt(steps, 10);
-        if (isNaN(stepsNum) || stepsNum < 0 || stepsNum > 200000) {
-          throw new Error('Steps must be a valid number between 0 and 200,000');
-        }
+      // Validate date is not in the future
+      const entryDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
+      
+      if (entryDate > today) {
+        throw new Error('Cannot add data for future dates');
       }
 
-      // Validate weight (if provided)
-      if (weight !== null && weight !== undefined) {
-        const weightNum = parseFloat(weight);
-        if (isNaN(weightNum) || weightNum < 50 || weightNum > 1000) {
-          throw new Error('Weight must be a valid number between 50 and 1000 lbs');
-        }
+      // Validate date is not too old (more than 1 year)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      
+      if (entryDate < oneYearAgo) {
+        throw new Error('Cannot add data older than 1 year');
       }
 
       // At least one value must be provided
-      if ((steps === null || steps === undefined) && (weight === null || weight === undefined)) {
+      if ((steps === null || steps === undefined || steps === '') && 
+          (weight === null || weight === undefined || weight === '')) {
         throw new Error('At least one of steps or weight must be provided');
+      }
+
+      // Validate the data values
+      const validation = validateHealthData(steps, weight);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join('. '));
       }
 
       // Prepare data for save
       const entry = {
         date: date,
-        steps: steps !== null && steps !== undefined ? parseInt(steps, 10) : null,
-        weight: weight !== null && weight !== undefined ? parseFloat(parseFloat(weight).toFixed(2)) : null
+        steps: (steps !== null && steps !== undefined && steps !== '') ? parseInt(steps, 10) : null,
+        weight: (weight !== null && weight !== undefined && weight !== '') ? parseFloat(parseFloat(weight).toFixed(2)) : null
       };
 
       // Save to Supabase
