@@ -45,6 +45,11 @@
   transition: all 0.2s ease;
 }
 
+.back-btn:hover {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
 .back-btn:active {
   background: var(--accent-secondary);
   transform: scale(0.98);
