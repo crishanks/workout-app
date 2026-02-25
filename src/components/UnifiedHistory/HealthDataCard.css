@@ -1,0 +1,107 @@
+.health-data-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+  transition: all 0.2s ease;
+}
+
+.health-data-card:hover {
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Header */
+.health-data-header {
+  margin-bottom: 1rem;
+}
+
+.health-data-date-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.health-data-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.health-data-date {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.health-data-label {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+  color: #92400e;
+  font-weight: 500;
+}
+
+/* Metrics Section */
+.health-data-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.health-metric-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.health-metric-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.health-metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.health-metric-label {
+  font-size: 0.85rem;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.health-metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #78350f;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .health-data-card {
+    padding: 0.875rem;
+  }
+
+  .health-data-date {
+    font-size: 0.95rem;
+  }
+
+  .health-data-label {
+    font-size: 0.8rem;
+  }
+
+  .health-metric-item {
+    padding: 0.625rem;
+  }
+
+  .health-metric-value {
+    font-size: 1.1rem;
+  }
+}

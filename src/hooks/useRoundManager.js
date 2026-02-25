@@ -85,6 +85,13 @@ export const useRoundManager = () => {
             endDate: null,
             isActive: true
         };
+        
+        console.log('[RoundManager] Starting new round', {
+            round: roundNumber,
+            startDate: data.startDate,
+            previousRound: roundData?.round
+        });
+        
         saveRoundData(data);
     };
 
@@ -100,15 +107,30 @@ export const useRoundManager = () => {
         saveRoundData(data);
     };
 
-    const endRound = () => {
+    const endRound = async () => {
         if (!roundData) return;
+
+        // Calculate the actual end date based on 84 days from start
+        const startDate = new Date(roundData.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 84);
+        endDate.setHours(23, 59, 59, 999);
 
         const data = {
             ...roundData,
-            endDate: new Date().toISOString(),
+            endDate: endDate.toISOString(),
             isActive: false
         };
-        saveRoundData(data);
+        
+        console.log('[RoundManager] Ending round', {
+            round: roundData.round,
+            startDate: roundData.startDate,
+            endDate: data.endDate,
+            daysElapsed: 84
+        });
+        
+        await saveRoundData(data);
     };
 
     const getCurrentWeekInRound = () => {
@@ -157,12 +179,23 @@ export const useRoundManager = () => {
     const updateRoundStartDate = async (newStartDate) => {
         if (!roundData || !userId) return;
 
+        const oldStartDate = roundData.startDate;
         const updatedData = {
             ...roundData,
             startDate: newStartDate
         };
 
+        console.log('[RoundManager] Updating round start date', {
+            round: roundData.round,
+            oldStartDate,
+            newStartDate,
+            willRecalculateBoundaries: true
+        });
+
         await saveRoundData(updatedData);
+        
+        // Log that components should recalculate
+        console.log('[RoundManager] Round start date updated - all date boundaries will be recalculated');
     };
 
     return {

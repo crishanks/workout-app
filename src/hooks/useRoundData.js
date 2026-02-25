@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useRoundManager } from './useRoundManager';
 import {
   getRoundWeekBoundaries,
@@ -7,6 +7,16 @@ import {
   isDateInRound,
   getAllRoundWeeks
 } from '../utils/roundDateUtils';
+import {
+  validateRoundContext,
+  handleMissingRoundContext,
+  consistencyLogger
+} from '../utils/dataConsistencyValidator';
+import {
+  archiveRoundData,
+  handleRoundStartDateChange,
+  validateRoundDataIsolation
+} from '../utils/roundTransitionHandler';
 
 /**
  * Central hook for round-aware data access
@@ -44,26 +54,52 @@ export function useRoundData() {
   // Memoize round context to prevent unnecessary recalculations
   const roundContext = useMemo(() => {
     if (!roundData || !roundData.startDate) {
+      consistencyLogger.warn('No active round data available');
       return {
         currentRound: null,
         currentWeek: null,
         roundStartDate: null,
         roundEndDate: null,
         isActive: false,
-        loading
+        loading,
+        isValid: false,
+        validationErrors: ['No active round']
       };
     }
 
     const currentWeek = roundManager.getCurrentWeekInRound();
     const { endDate } = getRoundDateRange(roundData.startDate);
 
-    return {
+    const context = {
       currentRound: roundData.round,
       currentWeek,
       roundStartDate: roundData.startDate,
       roundEndDate: roundData.endDate || endDate.toISOString(),
       isActive: roundData.isActive,
       loading
+    };
+
+    // Validate the round context
+    const validation = validateRoundContext(context);
+    
+    if (!validation.isValid) {
+      consistencyLogger.error('Invalid round context', {
+        context,
+        errors: validation.errors
+      });
+    }
+
+    if (validation.warnings.length > 0) {
+      consistencyLogger.warn('Round context warnings', {
+        warnings: validation.warnings
+      });
+    }
+
+    return {
+      ...context,
+      isValid: validation.isValid,
+      validationErrors: validation.errors,
+      validationWarnings: validation.warnings
     };
   }, [roundData, loading, roundManager]);
 
@@ -143,13 +179,15 @@ export function useRoundData() {
      * @param {number} roundNumber - Round number to start
      */
     startRound: (roundNumber) => {
+      consistencyLogger.info('Starting new round', { roundNumber, previousRound: roundContext.currentRound });
       roundManager.startRound(roundNumber);
     },
 
     /**
-     * End the current round
+     * End the current round and archive data
      */
     endRound: () => {
+      consistencyLogger.info('Ending round', { round: roundContext.currentRound });
       roundManager.endRound();
     },
 
@@ -158,6 +196,12 @@ export function useRoundData() {
      * @param {string} newDate - New start date (ISO string)
      */
     updateRoundStartDate: (newDate) => {
+      const oldDate = roundContext.roundStartDate;
+      consistencyLogger.info('Updating round start date', { 
+        round: roundContext.currentRound,
+        oldDate, 
+        newDate 
+      });
       roundManager.updateRoundStartDate(newDate);
     },
 
@@ -165,6 +209,7 @@ export function useRoundData() {
      * Restart the current round
      */
     restartCurrentRound: () => {
+      consistencyLogger.info('Restarting round', { round: roundContext.currentRound });
       roundManager.restartCurrentRound();
     },
 
@@ -190,8 +235,60 @@ export function useRoundData() {
      */
     canRestart: () => {
       return roundManager.canRestart();
+    },
+
+    /**
+     * Handle missing round context for a component
+     * @param {string} componentName - Name of the component
+     * @param {string} dataType - Type of data needed
+     * @returns {Object} Fallback data and error information
+     */
+    handleMissingContext: (componentName, dataType) => {
+      return handleMissingRoundContext(componentName, dataType);
+    },
+
+    /**
+     * Archive current round data
+     * @param {Array} workouts - Workouts to archive
+     * @param {Array} healthData - Health data to archive
+     * @returns {Object} Archive result
+     */
+    archiveCurrentRound: (workouts, healthData) => {
+      if (!roundData) {
+        consistencyLogger.error('Cannot archive - no round data');
+        return { success: false, error: 'No round data' };
+      }
+      return archiveRoundData(roundData, workouts, healthData);
+    },
+
+    /**
+     * Validate round data isolation between rounds
+     * @param {Object} historicalRound - Previous round
+     * @param {Object} newRound - New round
+     * @param {Array} workouts - All workouts
+     * @param {Array} healthData - All health data
+     * @returns {Object} Validation result
+     */
+    validateDataIsolation: (historicalRound, newRound, workouts, healthData) => {
+      return validateRoundDataIsolation(historicalRound, newRound, workouts, healthData);
+    },
+
+    /**
+     * Handle round start date change with recalculation
+     * @param {string} newDate - New start date
+     * @param {Array} workouts - All workouts
+     * @param {Array} healthData - All health data
+     * @returns {Object} Recalculation result
+     */
+    handleStartDateChange: (newDate, workouts, healthData) => {
+      const oldDate = roundContext.roundStartDate;
+      if (!oldDate) {
+        consistencyLogger.error('Cannot handle start date change - no current start date');
+        return { success: false, error: 'No current start date' };
+      }
+      return handleRoundStartDateChange(oldDate, newDate, workouts, healthData);
     }
-  }), [roundManager]);
+  }), [roundManager, roundContext, roundData]);
 
   // Return unified interface
   return {

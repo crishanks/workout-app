@@ -16,11 +16,6 @@ const RoundCard = ({ round, stats, healthSummary, isActive }) => {
     return `${Math.round(value)}%`;
   };
 
-  const formatWeight = (weight) => {
-    if (weight === null || weight === undefined) return 'N/A';
-    return `${weight.toFixed(1)} lbs`;
-  };
-
   const formatWeightChange = (change) => {
     if (change === null || change === undefined) return null;
     const sign = change >= 0 ? '+' : '';
@@ -30,6 +25,11 @@ const RoundCard = ({ round, stats, healthSummary, isActive }) => {
   const formatSteps = (steps) => {
     if (steps === null || steps === undefined) return 'N/A';
     return steps.toLocaleString();
+  };
+
+  const formatGoalsMet = (goalsMet) => {
+    if (goalsMet === null || goalsMet === undefined) return 'N/A';
+    return `${goalsMet}/12`;
   };
 
   return (
@@ -97,28 +97,46 @@ const RoundCard = ({ round, stats, healthSummary, isActive }) => {
         <h3 className="health-summary-title">Health Metrics</h3>
         <div className="health-summary-grid">
           <div className="health-metric">
-            <div className="health-metric-label">Avg Steps/Week</div>
+            <div className="health-metric-label">Total Steps</div>
             <div className="health-metric-value">
-              {healthSummary.avgStepsPerWeek !== null 
-                ? formatSteps(healthSummary.avgStepsPerWeek)
-                : 'No data available'}
+              {healthSummary.totalSteps !== null 
+                ? formatSteps(healthSummary.totalSteps)
+                : 'No data'}
+            </div>
+          </div>
+          <div className="health-metric">
+            <div className="health-metric-label">Weekly Goals Met</div>
+            <div className="health-metric-value">
+              {healthSummary.weeklyStepGoalsMet !== null ? (
+                <span className="goals-met-indicator">
+                  {formatGoalsMet(healthSummary.weeklyStepGoalsMet)}
+                  {healthSummary.weeklyStepGoalsMet >= 10 && (
+                    <span className="goal-badge excellent" aria-label="Excellent performance">🏆</span>
+                  )}
+                  {healthSummary.weeklyStepGoalsMet >= 8 && healthSummary.weeklyStepGoalsMet < 10 && (
+                    <span className="goal-badge good" aria-label="Good performance">⭐</span>
+                  )}
+                </span>
+              ) : (
+                'No data'
+              )}
             </div>
           </div>
           <div className="health-metric">
             <div className="health-metric-label">Weight Change</div>
             <div className="health-metric-value">
-              {healthSummary.totalWeightChange !== null ? (
+              {healthSummary.weightChange !== null ? (
                 <span 
                   className={`weight-change ${
-                    healthSummary.totalWeightChange < 0 ? 'weight-loss' : 
-                    healthSummary.totalWeightChange > 0 ? 'weight-gain' : 
+                    healthSummary.weightChange < 0 ? 'weight-loss' : 
+                    healthSummary.weightChange > 0 ? 'weight-gain' : 
                     'weight-neutral'
                   }`}
                 >
-                  {formatWeightChange(healthSummary.totalWeightChange)}
+                  {formatWeightChange(healthSummary.weightChange)}
                 </span>
               ) : (
-                'No data available'
+                'No data'
               )}
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getBrowserFingerprint } from '../utils/browserFingerprint';
+import { getRoundWeekBoundaries, isDateInRound, getWeekNumberFromDate } from '../utils/roundDateUtils';
 
 export const useSupabaseWorkoutHistory = () => {
     const [workoutHistory, setWorkoutHistory] = useState([]);
@@ -418,6 +419,124 @@ export const useSupabaseWorkoutHistory = () => {
         return lastSession.exercises.map(e => e.name);
     };
 
+    /**
+     * Get all workouts for a specific round week
+     * @param {number} round - Round number
+     * @param {number} week - Week number within round (1-12)
+     * @param {string} roundStartDate - Round start date (YYYY-MM-DD)
+     * @returns {Array<Object>} Workout sessions for the specified round week
+     */
+    const getWorkoutsByRoundWeek = (round, week, roundStartDate) => {
+        if (!roundStartDate) {
+            console.warn('getWorkoutsByRoundWeek: roundStartDate is required');
+            return [];
+        }
+
+        try {
+            const { startDate, endDate } = getRoundWeekBoundaries(roundStartDate, week);
+            
+            // Filter workouts by round and validate dates fall within week boundaries
+            const workouts = workoutHistory.filter(session => {
+                if (session.round !== round) return false;
+                
+                // Parse the session date
+                const sessionDateStr = session.date.includes('T') 
+                    ? session.date.split('T')[0] 
+                    : session.date;
+                const sessionDate = new Date(sessionDateStr + 'T12:00:00');
+                
+                // Check if date falls within the week boundaries
+                const isInWeek = sessionDate >= startDate && sessionDate <= endDate;
+                
+                // Log warning if workout has correct round/week but date doesn't align
+                if (session.week === week && !isInWeek) {
+                    console.warn(
+                        `Workout date mismatch: Round ${round}, Week ${week}, ` +
+                        `Date ${sessionDateStr} falls outside expected boundaries ` +
+                        `(${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]})`
+                    );
+                }
+                
+                return isInWeek;
+            });
+            
+            return workouts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (error) {
+            console.error('Error in getWorkoutsByRoundWeek:', error);
+            return [];
+        }
+    };
+
+    /**
+     * Validate workout dates against round boundaries
+     * @param {number} round - Round number
+     * @param {string} roundStartDate - Round start date (YYYY-MM-DD)
+     * @returns {Object} Validation results with misaligned workouts
+     */
+    const validateWorkoutDates = (round, roundStartDate) => {
+        if (!roundStartDate) {
+            console.warn('validateWorkoutDates: roundStartDate is required');
+            return { valid: [], invalid: [], warnings: [] };
+        }
+
+        const roundWorkouts = workoutHistory.filter(s => s.round === round);
+        const valid = [];
+        const invalid = [];
+        const warnings = [];
+
+        roundWorkouts.forEach(session => {
+            const sessionDateStr = session.date.includes('T') 
+                ? session.date.split('T')[0] 
+                : session.date;
+            
+            // Check if date is within round boundaries
+            const inRound = isDateInRound(sessionDateStr, roundStartDate);
+            
+            if (!inRound) {
+                invalid.push({
+                    ...session,
+                    reason: 'Date falls outside round boundaries'
+                });
+                console.warn(
+                    `Workout outside round boundaries: ` +
+                    `Round ${round}, Day ${session.day}, Week ${session.week}, ` +
+                    `Date ${sessionDateStr} (Round starts: ${roundStartDate})`
+                );
+                return;
+            }
+            
+            // Check if week number matches the calculated week from date
+            const calculatedWeek = getWeekNumberFromDate(roundStartDate, sessionDateStr);
+            
+            if (calculatedWeek !== session.week) {
+                warnings.push({
+                    ...session,
+                    calculatedWeek,
+                    storedWeek: session.week,
+                    reason: `Week mismatch: stored as week ${session.week}, but date ${sessionDateStr} falls in week ${calculatedWeek}`
+                });
+                console.warn(
+                    `Week number mismatch: ` +
+                    `Round ${round}, Day ${session.day}, ` +
+                    `Stored Week ${session.week}, Calculated Week ${calculatedWeek}, ` +
+                    `Date ${sessionDateStr}`
+                );
+            } else {
+                valid.push(session);
+            }
+        });
+
+        // Log summary
+        if (invalid.length > 0 || warnings.length > 0) {
+            console.log(
+                `Validation Summary for Round ${round}: ` +
+                `${valid.length} valid, ${warnings.length} warnings, ${invalid.length} invalid`
+            );
+        }
+
+        return { valid, invalid, warnings };
+    };
+
     return {
         workoutHistory,
         loading,
@@ -429,6 +548,8 @@ export const useSupabaseWorkoutHistory = () => {
         updateSession,
         deleteSession,
         updateSessionDate,
-        getLastPerformedExercise
+        getLastPerformedExercise,
+        getWorkoutsByRoundWeek,
+        validateWorkoutDates
     };
 };

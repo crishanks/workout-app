@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useHealthData } from '../../hooks/useHealthData';
+import { useRoundData } from '../../hooks/useRoundData';
+import { RoundContextHeader } from './RoundContextHeader';
 import { WeightChart } from './WeightChart';
 import { WeightSummary } from './WeightSummary';
 import { WeeklyStepsChart } from './WeeklyStepsChart';
@@ -11,16 +13,28 @@ import './HealthProgress.css';
 export const HealthProgress = ({ onBack }) => {
   const {
     healthData,
-    loading,
+    loading: healthLoading,
     error,
     syncFromAppleHealth,
     addManualEntry,
     hasPermissions,
     requestPermissions,
     isIOS,
-    getWeightProgress,
-    getWeeklySteps
+    getRoundHealthMetrics,
+    getCurrentWeekHealthData,
+    getWeightProgressForRound
   } = useHealthData();
+
+  const {
+    currentRound,
+    currentWeek,
+    roundStartDate,
+    roundEndDate,
+    isActive,
+    loading: roundLoading
+  } = useRoundData();
+
+  const loading = healthLoading || roundLoading;
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState(null);
@@ -75,47 +89,29 @@ export const HealthProgress = ({ onBack }) => {
     return success;
   };
 
-  // Calculate weight progress
-  const weightProgress = useMemo(() => getWeightProgress(), [healthData]);
-
-  // Calculate weekly steps for last 12 weeks
-  const weeklyStepsData = useMemo(() => {
-    const weeks = [];
-    const today = new Date();
-
-    for (let i = 11; i >= 0; i--) {
-      const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() - (i * 7));
-
-      const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - 6);
-
-      const weekData = getWeeklySteps(
-        startDate.toISOString().split('T')[0],
-        endDate.toISOString().split('T')[0]
-      );
-
-      weeks.push(weekData);
+  // Calculate round-based health metrics
+  const roundHealthMetrics = useMemo(() => {
+    if (!roundStartDate || !isActive) {
+      return [];
     }
+    return getRoundHealthMetrics(roundStartDate);
+  }, [roundStartDate, isActive, healthData, getRoundHealthMetrics]);
 
-    return weeks;
-  }, [healthData]);
+  // Get current week health data
+  const currentWeekData = useMemo(() => {
+    if (!roundStartDate || !currentWeek || !isActive) {
+      return null;
+    }
+    return getCurrentWeekHealthData(currentWeek, roundStartDate);
+  }, [currentWeek, roundStartDate, isActive, healthData, getCurrentWeekHealthData]);
 
-  // Calculate current week steps
-  const currentWeekSteps = useMemo(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    return getWeeklySteps(
-      monday.toISOString().split('T')[0],
-      sunday.toISOString().split('T')[0]
-    );
-  }, [healthData]);
+  // Calculate weight progress for current round
+  const weightProgress = useMemo(() => {
+    if (!roundStartDate || !isActive) {
+      return { entries: [], currentWeight: null, startWeight: null, totalChange: 0, trend: 'stable' };
+    }
+    return getWeightProgressForRound(roundStartDate, roundEndDate);
+  }, [roundStartDate, roundEndDate, isActive, healthData, getWeightProgressForRound]);
 
   const hasData = healthData && healthData.length > 0;
 
@@ -180,6 +176,8 @@ export const HealthProgress = ({ onBack }) => {
           </div>
         </header>
         <main className="health-content" role="main">
+          <RoundContextHeader round={currentRound} week={currentWeek} loading={roundLoading} />
+
           <div className="platform-message" role="region" aria-labelledby="platform-heading">
             <h3 id="platform-heading">Manual Entry Mode</h3>
             <p>
@@ -204,23 +202,45 @@ export const HealthProgress = ({ onBack }) => {
             error={error}
           />
 
-          {hasData && (
+          {!isActive && !loading && (
+            <div className="no-data-message" role="status" aria-live="polite">
+              <p>Start a round to begin tracking your health progress.</p>
+            </div>
+          )}
+
+          {isActive && hasData && (
             <>
               <section className="health-section weight-section" aria-labelledby="weight-heading">
                 <h2 id="weight-heading">Weight Progress</h2>
-                <WeightChart data={weightProgress.entries} />
+                <WeightChart 
+                  data={weightProgress.entries} 
+                  roundStartDate={roundStartDate}
+                  roundEndDate={roundEndDate}
+                />
                 <WeightSummary weightProgress={weightProgress} />
               </section>
 
               <section className="health-section steps-section" aria-labelledby="steps-heading">
                 <h2 id="steps-heading">Steps Progress</h2>
-                <WeeklyStepsChart data={weeklyStepsData} />
-                <CurrentWeekSteps stepsData={currentWeekSteps} />
+                <WeeklyStepsChart 
+                  data={roundHealthMetrics} 
+                  currentWeek={currentWeek}
+                />
+                {currentWeekData && (
+                  <CurrentWeekSteps 
+                    stepsData={currentWeekData.steps}
+                    weekNumber={currentWeek}
+                    weekBoundaries={{
+                      startDate: currentWeekData.startDate,
+                      endDate: currentWeekData.endDate
+                    }}
+                  />
+                )}
               </section>
             </>
           )}
 
-          {!hasData && !loading && (
+          {isActive && !hasData && !loading && (
             <div className="no-data-message" role="status" aria-live="polite">
               <p>No health data yet. Add your first entry above to get started!</p>
             </div>
@@ -258,6 +278,8 @@ export const HealthProgress = ({ onBack }) => {
       </header>
 
       <main className="health-content" role="main">
+        <RoundContextHeader round={currentRound} week={currentWeek} loading={roundLoading} />
+
         {syncMessage && (
           <div
             className={`sync-message ${syncMessage.type}`}
@@ -284,7 +306,16 @@ export const HealthProgress = ({ onBack }) => {
           />
         </div>
 
-        {!hasData && !loading && (
+        {!isActive && !loading && (
+          <div className="no-data-prompt" role="region" aria-labelledby="no-round-heading">
+            <h3 id="no-round-heading">No Active Round</h3>
+            <p>
+              Start a round to begin tracking your health progress within your training cycle.
+            </p>
+          </div>
+        )}
+
+        {isActive && !hasData && !loading && (
           <div className="no-data-prompt" role="region" aria-labelledby="no-data-heading">
             <h3 id="no-data-heading">No Health Data</h3>
             <p>
@@ -303,18 +334,34 @@ export const HealthProgress = ({ onBack }) => {
           </div>
         )}
 
-        {hasData && (
+        {isActive && hasData && (
           <>
             <section className="health-section weight-section" aria-labelledby="weight-heading">
               <h2 id="weight-heading">Weight Progress</h2>
-              <WeightChart data={weightProgress.entries} />
+              <WeightChart 
+                data={weightProgress.entries}
+                roundStartDate={roundStartDate}
+                roundEndDate={roundEndDate}
+              />
               <WeightSummary weightProgress={weightProgress} />
             </section>
 
             <section className="health-section steps-section" aria-labelledby="steps-heading">
               <h2 id="steps-heading">Steps Progress</h2>
-              <WeeklyStepsChart data={weeklyStepsData} />
-              <CurrentWeekSteps stepsData={currentWeekSteps} />
+              <WeeklyStepsChart 
+                data={roundHealthMetrics}
+                currentWeek={currentWeek}
+              />
+              {currentWeekData && (
+                <CurrentWeekSteps 
+                  stepsData={currentWeekData.steps}
+                  weekNumber={currentWeek}
+                  weekBoundaries={{
+                    startDate: currentWeekData.startDate,
+                    endDate: currentWeekData.endDate
+                  }}
+                />
+              )}
             </section>
           </>
         )}

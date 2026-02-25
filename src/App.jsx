@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Activity } from 'lucide-react';
+import { Clock, Activity } from 'lucide-react';
 import { workoutProgram } from './data/workoutData';
 import { useSupabaseWorkoutHistory } from './hooks/useSupabaseWorkoutHistory';
 import { useExerciseVariants } from './hooks/useExerciseVariants';
 import { useStats } from './hooks/useStats';
-import { useRoundManager } from './hooks/useRoundManager';
+import { useRoundData } from './hooks/useRoundData';
 import { useHealthData } from './hooks/useHealthData';
 import { Header } from './components/Header/Header';
 import { DayTabs } from './components/DayTabs/DayTabs';
 import { RestDay } from './components/RestDay/RestDay';
 import { ExerciseCard } from './components/ExerciseCard/ExerciseCard';
-import { Stats } from './components/Stats/Stats';
 import { RoundStart } from './components/RoundStart/RoundStart';
 import { RoundComplete } from './components/RoundComplete/RoundComplete';
 import UnifiedHistory from './components/UnifiedHistory/UnifiedHistory';
@@ -22,23 +21,34 @@ import './App.css';
 function App() {
   const [currentDay, setCurrentDay] = useState(0);
   const [showExercise, setShowExercise] = useState(null);
-  const [showStats, setShowStats] = useState(false);
   const [showHealthProgress, setShowHealthProgress] = useState(false);
   const [showUnifiedHistory, setShowUnifiedHistory] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const { logSet, getLastWorkout, getCurrentLog, workoutHistory, getLastPerformedExercise, loading } = useSupabaseWorkoutHistory();
   const { exerciseVariants, getActiveExercise, setExerciseVariant } = useExerciseVariants();
-  const roundManager = useRoundManager();
+  const roundData = useRoundData();
   const { healthData } = useHealthData();
-  const stats = useStats(workoutHistory, healthData, roundManager.roundData?.startDate);
+  const stats = useStats(workoutHistory, healthData, roundData.roundStartDate);
 
-  const currentRound = roundManager.getCurrentRound();
-  const currentWeek = roundManager.getCurrentWeekInRound();
-  const hasActiveRound = roundManager.hasActiveRound();
-  const isComplete = roundManager.isRoundComplete();
-  const roundLoading = roundManager.loading;
+  const {
+    currentRound,
+    currentWeek,
+    roundStartDate,
+    isActive: hasActiveRound,
+    loading: roundLoading,
+    isRoundComplete,
+    canRestart,
+    startRound,
+    endRound,
+    updateRoundStartDate,
+    restartCurrentRound,
+    archiveCurrentRound
+  } = roundData;
+
+  const isComplete = isRoundComplete();
 
   const programWeek = currentWeek ? ((currentWeek - 1) % 12) + 1 : 1;
   const week = workoutProgram.weeks.find(w => w.week === programWeek);
@@ -75,26 +85,51 @@ function App() {
 
   useEffect(() => {
     if (isComplete) {
-      roundManager.endRound();
+      setIsTransitioning(true);
+      
+      // Archive the round data before ending
+      const archiveResult = archiveCurrentRound(workoutHistory, healthData);
+      
+      if (archiveResult.success) {
+        console.log('[App] Round archived successfully', archiveResult.archive);
+      } else {
+        console.error('[App] Failed to archive round', archiveResult.error);
+      }
+      
+      endRound();
+      
+      // Clear transition state after a brief delay
+      setTimeout(() => setIsTransitioning(false), 500);
     }
-  }, [isComplete]);
+  }, [isComplete, endRound, archiveCurrentRound, workoutHistory, healthData]);
 
   const handleStartRound = () => {
+    setIsTransitioning(true);
     const roundToStart = currentRound || 1;
-    roundManager.startRound(roundToStart);
+    
+    console.log('[App] Starting new round', { roundToStart });
+    startRound(roundToStart);
+    
+    // Clear transition state after a brief delay
+    setTimeout(() => setIsTransitioning(false), 500);
   };
 
   const handleRestartRound = () => {
-    roundManager.restartCurrentRound();
+    setIsTransitioning(true);
+    restartCurrentRound();
     setShowRestartModal(false);
+    
+    // Clear transition state after a brief delay
+    setTimeout(() => setIsTransitioning(false), 500);
   };
 
-  // Show loading state while round data is being fetched
-  if (roundLoading || loading) {
+  // Show loading state while round data is being fetched or during transitions
+  if (roundLoading || loading || isTransitioning) {
     return (
       <div className="app">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '1rem' }}>
           <div>Loading...</div>
+          {isTransitioning && <div style={{ fontSize: '0.875rem', color: '#666' }}>Processing round transition...</div>}
         </div>
       </div>
     );
@@ -110,7 +145,7 @@ function App() {
         roundNumber={currentRound}
         stats={stats}
         onStartNext={() => {
-          roundManager.startRound(currentRound + 1);
+          startRound(currentRound + 1);
         }}
       />
     );
@@ -128,10 +163,6 @@ function App() {
     return <HealthProgress onBack={() => setShowHealthProgress(false)} />;
   }
 
-  if (showStats) {
-    return <Stats stats={stats} onBack={() => setShowStats(false)} />;
-  }
-
   return (
     <div className="app">
       <Header
@@ -140,9 +171,11 @@ function App() {
         programWeek={programWeek}
         onRestart={() => setShowRestartModal(true)}
         onHelpClick={() => setShowHelp(true)}
-        canRestart={roundManager.canRestart()}
-        roundStartDate={roundManager.roundData?.startDate}
-        onUpdateStartDate={roundManager.updateRoundStartDate}
+        canRestart={canRestart()}
+        roundStartDate={roundStartDate}
+        onUpdateStartDate={updateRoundStartDate}
+        workoutHistory={workoutHistory}
+        healthData={healthData}
       />
       <DayTabs days={week?.days || []} currentDay={currentDay} onDayChange={setCurrentDay} />
 
@@ -197,9 +230,6 @@ function App() {
             <div className="header-actions">
               <button className="history-btn" onClick={() => setShowUnifiedHistory(true)} title="View History">
                 <Clock size={22} strokeWidth={2} />
-              </button>
-              <button className="stats-btn" onClick={() => setShowStats(true)} title="View Stats">
-                <TrendingUp size={22} strokeWidth={2} />
               </button>
               <button className="health-btn" onClick={() => setShowHealthProgress(true)} title="View Health Progress">
                 <Activity size={22} strokeWidth={2} />

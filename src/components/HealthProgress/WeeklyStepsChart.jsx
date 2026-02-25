@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
+export const WeeklyStepsChart = memo(({ data, currentWeek, goal = 60000, height = 250 }) => {
   if (!data || data.length === 0) {
     return (
       <div className="chart-empty" role="status" aria-live="polite">
@@ -10,16 +10,22 @@ export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
     );
   }
 
-  // Format data for Recharts
-  const chartData = data.map((week, index) => ({
-    week: `W${index + 1}`,
-    steps: week.totalSteps,
-    goalMet: week.goalMet,
-    percentage: week.percentageOfGoal
+  // Format data for Recharts - data is already in round week format
+  const chartData = data.map((weekData) => ({
+    week: `W${weekData.week}`,
+    weekNumber: weekData.week,
+    steps: weekData.steps.total,
+    goalMet: weekData.steps.goalMet,
+    percentage: weekData.steps.percentageOfGoal,
+    isCurrentWeek: weekData.week === currentWeek,
+    isWeekComplete: weekData.steps.isWeekComplete,
+    daysElapsed: weekData.steps.daysElapsed,
+    expectedSteps: weekData.steps.expectedSteps
   }));
 
   // Determine bar color based on goal achievement
-  const getBarColor = (percentage) => {
+  const getBarColor = (percentage, isCurrentWeek) => {
+    if (isCurrentWeek) return 'var(--accent-primary)'; // Blue - current week
     if (percentage >= 100) return 'var(--accent-success)'; // Green - goal met
     if (percentage >= 80) return 'var(--accent-warning)'; // Orange - close
     return '#ef4444'; // Red - missed
@@ -30,13 +36,23 @@ export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
       const data = payload[0].payload;
       return (
         <div className="custom-tooltip" role="tooltip">
-          <p className="tooltip-label">{data.week}</p>
+          <p className="tooltip-label">Week {data.weekNumber}</p>
           <p className="tooltip-value">{data.steps.toLocaleString()} steps</p>
           <p className="tooltip-percentage" style={{ 
-            color: getBarColor(data.percentage) 
+            color: getBarColor(data.percentage, data.isCurrentWeek) 
           }}>
             {data.percentage}% of goal
           </p>
+          {data.isCurrentWeek && (
+            <p className="tooltip-current" style={{ color: 'var(--accent-primary)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+              Current Week {!data.isWeekComplete && `(${data.daysElapsed}/7 days)`}
+            </p>
+          )}
+          {!data.isWeekComplete && data.isCurrentWeek && (
+            <p className="tooltip-expected" style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: 'var(--text-secondary)' }}>
+              Expected: {data.expectedSteps.toLocaleString()} steps
+            </p>
+          )}
         </div>
       );
     }
@@ -44,8 +60,8 @@ export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
   };
 
   const CustomBar = (props) => {
-    const { fill, x, y, width, height, payload } = props;
-    const barColor = getBarColor(payload.percentage);
+    const { x, y, width, height, payload } = props;
+    const barColor = getBarColor(payload.percentage, payload.isCurrentWeek);
     
     return (
       <rect
@@ -60,8 +76,8 @@ export const WeeklyStepsChart = memo(({ data, goal = 60000, height = 250 }) => {
   };
 
   // Create accessible description
-  const weeksMetGoal = data.filter(w => w.goalMet).length;
-  const chartDescription = `Weekly steps chart showing ${data.length} weeks. ${weeksMetGoal} out of ${data.length} weeks met the 60,000 step goal`;
+  const weeksMetGoal = data.filter(w => w.steps.goalMet).length;
+  const chartDescription = `Weekly steps chart showing ${data.length} weeks. ${weeksMetGoal} out of ${data.length} weeks met the 60,000 step goal. Currently on week ${currentWeek}.`;
 
   return (
     <div 

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { RotateCcw, HelpCircle, Calendar } from 'lucide-react';
 import './Header.css';
 
-export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canRestart, onHelpClick, roundStartDate, onUpdateStartDate }) => {
+export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canRestart, onHelpClick, roundStartDate, onUpdateStartDate, workoutHistory, healthData }) => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [editedDate, setEditedDate] = useState('');
+  const [dateChangeWarning, setDateChangeWarning] = useState(null);
   // Helper to parse date as local date (not UTC)
   const parseLocalDate = (dateStr) => {
     if (!dateStr) return null;
@@ -39,7 +40,15 @@ export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canR
     if (editedDate && onUpdateStartDate) {
       // Convert to ISO string at midnight local time
       const newDate = new Date(editedDate + 'T00:00:00');
+      
+      console.log('[Header] Updating round start date', {
+        oldDate: roundStartDate,
+        newDate: newDate.toISOString(),
+        round: currentRound
+      });
+      
       onUpdateStartDate(newDate.toISOString());
+      setDateChangeWarning(null);
     }
     setShowDateModal(false);
   };
@@ -80,8 +89,13 @@ export const Header = ({ currentWeek, currentRound, programWeek, onRestart, canR
           <div className="date-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Edit Round Start Date</h3>
             <p className="date-modal-info">
-              Changing the start date will automatically adjust the end date to maintain the 12-week duration.
+              Changing the start date will automatically adjust the end date to maintain the 12-week duration. All week boundaries will be recalculated.
             </p>
+            {dateChangeWarning && (
+              <div className="date-modal-warning">
+                ⚠️ {dateChangeWarning}
+              </div>
+            )}
             <input
               type="date"
               value={editedDate}

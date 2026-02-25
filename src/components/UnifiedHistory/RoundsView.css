@@ -4,6 +4,49 @@
   margin: 0 auto;
 }
 
+/* Round Filters */
+.round-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.round-chip {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.round-chip:hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.round-chip.active {
+  background: #8b5cf6;
+  color: white;
+  border-color: #8b5cf6;
+}
+
+.round-chip:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
 .rounds-list {
   display: flex;
   flex-direction: column;
@@ -43,5 +86,14 @@
 @media (max-width: 768px) {
   .rounds-view {
     padding: 0.75rem;
+  }
+
+  .round-filters {
+    gap: 0.4rem;
+  }
+
+  .round-chip {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
   }
 }

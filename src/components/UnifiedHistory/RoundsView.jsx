@@ -1,12 +1,15 @@
 import { useMemo } from 'react';
 import { useStats } from '../../hooks/useStats';
 import RoundCard from './RoundCard';
+import { getRoundDateRange, getAllRoundWeeks } from '../../utils/roundDateUtils';
 import './RoundsView.css';
 
 const RoundsView = ({
   workoutHistory,
   healthData,
-  roundManager
+  roundManager,
+  selectedRound,
+  onRoundSelect
 }) => {
   // Group workout history by round using useMemo
   const roundsData = useMemo(() => {
@@ -54,8 +57,13 @@ const RoundsView = ({
     // Sort rounds from most recent to oldest
     rounds.sort((a, b) => b.round - a.round);
 
+    // Filter by selected round if applicable
+    if (selectedRound !== null) {
+      return rounds.filter(round => round.round === selectedRound);
+    }
+
     return rounds;
-  }, [workoutHistory, roundManager]);
+  }, [workoutHistory, roundManager, selectedRound]);
 
   // Empty state when no rounds exist
   if (roundsData.length === 0) {
@@ -70,53 +78,58 @@ const RoundsView = ({
     );
   }
 
+  // Get unique rounds for filter chips (from all workout history, not filtered)
+  const availableRounds = useMemo(() => {
+    if (!workoutHistory || workoutHistory.length === 0) {
+      return [];
+    }
+
+    const rounds = [...new Set(workoutHistory.map(session => session.round))];
+    return rounds.sort((a, b) => b - a); // Most recent first
+  }, [workoutHistory]);
+
+  // Show filter chips only if multiple rounds exist
+  const showRoundFilters = availableRounds.length > 1;
+
   // Function to calculate health metrics summary for a round
-  const calculateRoundHealthSummary = (roundHealthData) => {
-    if (!roundHealthData || roundHealthData.length === 0) {
+  const calculateRoundHealthSummary = (roundHealthData, roundStartDate) => {
+    if (!roundHealthData || roundHealthData.length === 0 || !roundStartDate) {
       return {
-        avgStepsPerWeek: null,
-        totalWeightChange: null,
+        totalSteps: null,
+        weeklyStepGoalsMet: null,
+        weightChange: null,
         startWeight: null,
         endWeight: null
       };
     }
 
-    // Calculate average steps per week
-    let avgStepsPerWeek = null;
-    const stepEntries = roundHealthData.filter(entry => entry.steps != null);
-    
-    if (stepEntries.length > 0) {
-      // Group step data by week
-      const weeklySteps = {};
-      stepEntries.forEach(entry => {
+    // Get all 12 weeks for this round
+    const allWeeks = getAllRoundWeeks(roundStartDate);
+    const weekGoal = 60000;
+
+    // Calculate total steps and weekly step goals met
+    let totalSteps = 0;
+    let weeklyStepGoalsMet = 0;
+
+    allWeeks.forEach(({ startDate, endDate }) => {
+      // Filter health data for this week
+      const weekData = roundHealthData.filter(entry => {
         const entryDate = new Date(entry.date);
-        // Get Monday of the week
-        const dayOfWeek = entryDate.getDay();
-        const diff = entryDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const monday = new Date(entryDate.setDate(diff));
-        monday.setHours(0, 0, 0, 0);
-        const weekKey = monday.toISOString().split('T')[0];
-        
-        if (!weeklySteps[weekKey]) {
-          weeklySteps[weekKey] = [];
-        }
-        weeklySteps[weekKey].push(entry.steps);
+        return entryDate >= startDate && entryDate <= endDate;
       });
 
-      // Calculate average steps for each week, then average across weeks
-      const weeklyAverages = Object.values(weeklySteps).map(steps => {
-        const sum = steps.reduce((acc, val) => acc + val, 0);
-        return sum / steps.length;
-      });
+      // Sum steps for this week
+      const weekSteps = weekData.reduce((sum, entry) => sum + (entry.steps || 0), 0);
+      totalSteps += weekSteps;
 
-      if (weeklyAverages.length > 0) {
-        const totalAvg = weeklyAverages.reduce((acc, val) => acc + val, 0);
-        avgStepsPerWeek = Math.round(totalAvg / weeklyAverages.length);
+      // Check if week goal was met
+      if (weekSteps >= weekGoal) {
+        weeklyStepGoalsMet++;
       }
-    }
+    });
 
-    // Calculate total weight change
-    let totalWeightChange = null;
+    // Calculate weight change
+    let weightChange = null;
     let startWeight = null;
     let endWeight = null;
     
@@ -127,16 +140,17 @@ const RoundsView = ({
     if (weightEntries.length >= 2) {
       startWeight = weightEntries[0].weight;
       endWeight = weightEntries[weightEntries.length - 1].weight;
-      totalWeightChange = endWeight - startWeight;
+      weightChange = endWeight - startWeight;
     } else if (weightEntries.length === 1) {
       startWeight = weightEntries[0].weight;
       endWeight = weightEntries[0].weight;
-      totalWeightChange = 0;
+      weightChange = 0;
     }
 
     return {
-      avgStepsPerWeek,
-      totalWeightChange,
+      totalSteps,
+      weeklyStepGoalsMet,
+      weightChange,
       startWeight,
       endWeight
     };
@@ -144,19 +158,45 @@ const RoundsView = ({
 
   return (
     <div className="rounds-view">
+      {showRoundFilters && (
+        <nav className="round-filters" aria-label="Filter by round">
+          <button
+            className={`round-chip ${selectedRound === null ? 'active' : ''}`}
+            onClick={() => onRoundSelect(null)}
+            aria-pressed={selectedRound === null}
+            aria-label="Show all rounds"
+          >
+            All Rounds
+          </button>
+          {availableRounds.map(round => (
+            <button
+              key={round}
+              className={`round-chip ${selectedRound === round ? 'active' : ''}`}
+              onClick={() => onRoundSelect(round)}
+              aria-pressed={selectedRound === round}
+              aria-label={`Filter to round ${round}`}
+            >
+              Round {round}
+            </button>
+          ))}
+        </nav>
+      )}
+
       <div className="rounds-list">
         {roundsData.map(round => {
           // Calculate stats for this round using useStats hook
           const roundSessions = round.sessions;
           const roundStartDate = round.startDate;
           
-          // Filter health data for this round
-          const roundHealthData = healthData.filter(entry => {
-            const entryDate = new Date(entry.date);
-            const startDate = new Date(roundStartDate);
-            const endDate = round.endDate ? new Date(round.endDate) : new Date();
-            return entryDate >= startDate && entryDate <= endDate;
-          });
+          // Use round boundaries to filter health data
+          let roundHealthData = [];
+          if (roundStartDate) {
+            const { startDate, endDate } = getRoundDateRange(roundStartDate);
+            roundHealthData = healthData.filter(entry => {
+              const entryDate = new Date(entry.date);
+              return entryDate >= startDate && entryDate <= endDate;
+            });
+          }
 
           // Use stats hook to calculate round statistics
           const statsHook = useStats(roundSessions, roundHealthData, roundStartDate);
@@ -176,8 +216,8 @@ const RoundsView = ({
             stepGoal
           };
 
-          // Calculate health metrics summary for this round
-          const healthSummary = calculateRoundHealthSummary(roundHealthData);
+          // Calculate health metrics summary for this round using round boundaries
+          const healthSummary = calculateRoundHealthSummary(roundHealthData, roundStartDate);
 
           return (
             <RoundCard

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSupabaseWorkoutHistory } from '../../hooks/useSupabaseWorkoutHistory';
 import { useHealthData } from '../../hooks/useHealthData';
-import { useRoundManager } from '../../hooks/useRoundManager';
+import { useRoundData } from '../../hooks/useRoundData';
 import { useStats } from '../../hooks/useStats';
 import TimelineView from './TimelineView';
 import RoundsView from './RoundsView';
@@ -21,8 +21,8 @@ const UnifiedHistory = ({ onBack }) => {
   // Integrate existing hooks
   const { workoutHistory, loading: workoutLoading, updateSession, deleteSession } = useSupabaseWorkoutHistory();
   const { healthData, loading: healthLoading, getWeeklyHealthMetrics } = useHealthData();
-  const roundManager = useRoundManager();
-  const stats = useStats(workoutHistory, healthData, roundManager.roundData?.startDate);
+  const roundData = useRoundData();
+  const stats = useStats(workoutHistory, healthData, roundData.roundStartDate);
 
   const loading = workoutLoading || healthLoading;
 
@@ -187,6 +187,8 @@ const UnifiedHistory = ({ onBack }) => {
                   workoutHistory={workoutHistory}
                   healthData={healthData}
                   roundManager={roundManager}
+                  selectedRound={selectedRound}
+                  onRoundSelect={handleRoundSelect}
                 />
               </section>
             )}

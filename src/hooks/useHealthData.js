@@ -3,6 +3,17 @@ import { Capacitor } from '@capacitor/core';
 import { Health } from '@capgo/capacitor-health';
 import { supabase } from '../lib/supabase';
 import { getBrowserFingerprint } from '../utils/browserFingerprint';
+import {
+  getRoundWeekBoundaries,
+  getRoundDateRange,
+  getAllRoundWeeks
+} from '../utils/roundDateUtils';
+import {
+  validateHealthDataInRound,
+  filterDataByRound,
+  getUserFriendlyErrorMessage,
+  consistencyLogger
+} from '../utils/dataConsistencyValidator';
 
 export const useHealthData = () => {
   // State management
@@ -307,17 +318,17 @@ export const useHealthData = () => {
       // Prepare data for upsert, preserving manual entries
       const recordsToUpsert = dataArray.map(entry => {
         const existing = existingMap[entry.date];
-        
+
         return {
           user_id: userId,
           date: entry.date,
           // Only update steps if new value exists, otherwise keep existing
-          steps: entry.steps !== null && entry.steps !== undefined 
-            ? entry.steps 
+          steps: entry.steps !== null && entry.steps !== undefined
+            ? entry.steps
             : (existing?.steps || null),
           // Only update weight if new value exists, otherwise keep existing
-          weight: entry.weight !== null && entry.weight !== undefined 
-            ? entry.weight 
+          weight: entry.weight !== null && entry.weight !== undefined
+            ? entry.weight
             : (existing?.weight || null),
           updated_at: new Date().toISOString()
         };
@@ -554,7 +565,7 @@ export const useHealthData = () => {
     // Calculate days elapsed in the week
     const weekStart = new Date(startDate);
     weekStart.setHours(0, 0, 0, 0);
-    
+
     let daysElapsed;
     if (isWeekComplete) {
       daysElapsed = 7; // Full week
@@ -596,6 +607,244 @@ export const useHealthData = () => {
       }))
     };
   }, [healthData]);
+
+  // Get weekly steps for a specific round week
+  const getWeeklyStepsByRoundWeek = useCallback((weekNumber, roundStartDate) => {
+    if (!roundStartDate || weekNumber < 1 || weekNumber > 12) {
+      consistencyLogger.warn('Invalid parameters for getWeeklyStepsByRoundWeek', {
+        weekNumber,
+        roundStartDate
+      });
+      return {
+        totalSteps: 0,
+        goalMet: false,
+        goalStatus: 'missed',
+        percentageOfGoal: 0,
+        isWeekComplete: false,
+        daysElapsed: 0,
+        expectedSteps: 0,
+        dailySteps: []
+      };
+    }
+
+    const { startDate, endDate } = getRoundWeekBoundaries(roundStartDate, weekNumber);
+    return getWeeklySteps(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]);
+  }, [getWeeklySteps]);
+
+  // Get weight progress for a specific round
+  const getWeightProgressForRound = useCallback((roundStartDate, roundEndDate = null) => {
+    if (!roundStartDate) {
+      consistencyLogger.warn('Missing round start date for getWeightProgressForRound');
+      return {
+        entries: [],
+        currentWeight: null,
+        startWeight: null,
+        totalChange: 0,
+        trend: 'stable'
+      };
+    }
+
+    const { startDate, endDate } = roundEndDate
+      ? { startDate: new Date(roundStartDate), endDate: new Date(roundEndDate) }
+      : getRoundDateRange(roundStartDate);
+
+    // Validate and filter health data for this round
+    const validation = validateHealthDataInRound(healthData, roundStartDate, roundEndDate);
+    if (!validation.isValid) {
+      consistencyLogger.error('Health data validation failed for round', {
+        roundStartDate,
+        roundEndDate,
+        errors: validation.errors
+      });
+    }
+
+    // Log warnings about data outside round
+    if (validation.warnings.length > 0) {
+      const message = getUserFriendlyErrorMessage(validation, 'weight data');
+      if (message) {
+        consistencyLogger.info(message, { metadata: validation.metadata });
+      }
+    }
+
+    const weightEntries = healthData
+      .filter(entry => {
+        if (!entry.weight) return false;
+        const entryDate = new Date(entry.date);
+        return entryDate >= startDate && entryDate <= endDate;
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (weightEntries.length === 0) {
+      return {
+        entries: [],
+        currentWeight: null,
+        startWeight: null,
+        totalChange: 0,
+        trend: 'stable'
+      };
+    }
+
+    const startWeight = weightEntries[0].weight;
+    const currentWeight = weightEntries[weightEntries.length - 1].weight;
+    const totalChange = parseFloat((currentWeight - startWeight).toFixed(2));
+
+    let trend = 'stable';
+    if (totalChange > 0.5) trend = 'increasing';
+    else if (totalChange < -0.5) trend = 'decreasing';
+
+    return {
+      entries: weightEntries.map(entry => ({
+        date: entry.date,
+        weight: entry.weight
+      })),
+      currentWeight,
+      startWeight,
+      totalChange,
+      trend
+    };
+  }, [healthData]);
+
+  // Get all health metrics for a round, organized by week (12 weeks)
+  const getRoundHealthMetrics = useCallback((roundStartDate) => {
+    if (!roundStartDate) {
+      consistencyLogger.warn('Missing round start date for getRoundHealthMetrics');
+      return [];
+    }
+
+    // Validate health data for this round
+    const { endDate } = getRoundDateRange(roundStartDate);
+    const validation = validateHealthDataInRound(
+      healthData,
+      roundStartDate,
+      endDate.toISOString().split('T')[0]
+    );
+
+    if (!validation.isValid) {
+      consistencyLogger.error('Health data validation failed for round metrics', {
+        roundStartDate,
+        errors: validation.errors
+      });
+    }
+
+    // Log warnings about data outside round
+    if (validation.warnings.length > 0 && validation.metadata.entriesOutsideRound > 0) {
+      consistencyLogger.info(
+        `${validation.metadata.entriesOutsideRound} health data entries outside round boundaries`,
+        { roundStartDate, metadata: validation.metadata }
+      );
+    }
+
+    const allWeeks = getAllRoundWeeks(roundStartDate);
+
+    return allWeeks.map(({ week, startDate, endDate }) => {
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      const stepsData = getWeeklySteps(startDateStr, endDateStr);
+      const weightData = getWeeklyAverageWeight(startDateStr, endDateStr);
+
+      // Calculate weight change from previous week
+      let weightChange = null;
+      if (weightData && week > 1) {
+        const prevWeek = getRoundWeekBoundaries(roundStartDate, week - 1);
+        const prevWeightData = getWeeklyAverageWeight(
+          prevWeek.startDate.toISOString().split('T')[0],
+          prevWeek.endDate.toISOString().split('T')[0]
+        );
+        if (prevWeightData) {
+          weightChange = parseFloat((weightData.average - prevWeightData.average).toFixed(1));
+        }
+      }
+
+      return {
+        week,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        weight: weightData ? {
+          average: weightData.average,
+          change: weightChange,
+          entryCount: weightData.entryCount
+        } : null,
+        steps: {
+          total: stepsData.totalSteps,
+          goalMet: stepsData.goalMet,
+          goalStatus: stepsData.goalStatus,
+          percentageOfGoal: stepsData.percentageOfGoal,
+          isWeekComplete: stepsData.isWeekComplete,
+          daysElapsed: stepsData.daysElapsed,
+          expectedSteps: stepsData.expectedSteps,
+          dailySteps: stepsData.dailySteps
+        }
+      };
+    });
+  }, [healthData, getWeeklySteps, getWeeklyAverageWeight]);
+
+  // Get health data for current round week
+  const getCurrentWeekHealthData = useCallback((currentWeek, roundStartDate) => {
+    if (!roundStartDate || !currentWeek || currentWeek < 1 || currentWeek > 12) {
+      consistencyLogger.warn('Invalid parameters for getCurrentWeekHealthData', {
+        currentWeek,
+        roundStartDate
+      });
+      return {
+        week: currentWeek || 1,
+        startDate: null,
+        endDate: null,
+        weight: null,
+        steps: {
+          total: 0,
+          goalMet: false,
+          goalStatus: 'missed',
+          percentageOfGoal: 0,
+          isWeekComplete: false,
+          daysElapsed: 0,
+          expectedSteps: 0,
+          dailySteps: []
+        }
+      };
+    }
+
+    const { startDate, endDate } = getRoundWeekBoundaries(roundStartDate, currentWeek);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    const stepsData = getWeeklySteps(startDateStr, endDateStr);
+    const weightData = getWeeklyAverageWeight(startDateStr, endDateStr);
+
+    // Calculate weight change from previous week
+    let weightChange = null;
+    if (weightData && currentWeek > 1) {
+      const prevWeek = getRoundWeekBoundaries(roundStartDate, currentWeek - 1);
+      const prevWeightData = getWeeklyAverageWeight(
+        prevWeek.startDate.toISOString().split('T')[0],
+        prevWeek.endDate.toISOString().split('T')[0]
+      );
+      if (prevWeightData) {
+        weightChange = parseFloat((weightData.average - prevWeightData.average).toFixed(1));
+      }
+    }
+
+    return {
+      week: currentWeek,
+      startDate: startDateStr,
+      endDate: endDateStr,
+      weight: weightData ? {
+        average: weightData.average,
+        change: weightChange,
+        entryCount: weightData.entryCount
+      } : null,
+      steps: {
+        total: stepsData.totalSteps,
+        goalMet: stepsData.goalMet,
+        goalStatus: stepsData.goalStatus,
+        percentageOfGoal: stepsData.percentageOfGoal,
+        isWeekComplete: stepsData.isWeekComplete,
+        daysElapsed: stepsData.daysElapsed,
+        expectedSteps: stepsData.expectedSteps,
+        dailySteps: stepsData.dailySteps
+      }
+    };
+  }, [getWeeklySteps, getWeeklyAverageWeight]);
 
   // Get weight progress history
   const getWeightProgress = useCallback(() => {
@@ -657,6 +906,7 @@ export const useHealthData = () => {
   }, [healthData]);
 
   // Get weekly health metrics (combined weight and steps)
+  // Updated to support both legacy calendar-based and new round-based queries
   const getWeeklyHealthMetrics = useCallback((startDate, endDate, previousWeekStartDate = null, previousWeekEndDate = null) => {
     const stepsData = getWeeklySteps(startDate, endDate);
     const weightData = getWeeklyAverageWeight(startDate, endDate);
@@ -687,6 +937,57 @@ export const useHealthData = () => {
     };
   }, [getWeeklySteps, getWeeklyAverageWeight]);
 
+  // Validate and get health data for a specific round
+  const getValidatedHealthDataForRound = useCallback((roundStartDate, roundEndDate = null) => {
+    if (!roundStartDate) {
+      consistencyLogger.error('Cannot validate health data without round start date');
+      return {
+        data: [],
+        validation: {
+          isValid: false,
+          errors: ['Missing round start date'],
+          warnings: [],
+          metadata: {}
+        },
+        userMessage: 'Unable to load health data. Please start a training round to continue.'
+      };
+    }
+
+    const endDate = roundEndDate || getRoundDateRange(roundStartDate).endDate.toISOString().split('T')[0];
+    
+    // Validate health data
+    const validation = validateHealthDataInRound(healthData, roundStartDate, endDate);
+    
+    // Filter data to only include entries within round
+    const { filtered, excluded } = filterDataByRound(healthData, roundStartDate, endDate);
+    
+    // Get user-friendly message if there are issues
+    const userMessage = getUserFriendlyErrorMessage(validation, 'health data');
+    
+    // Log validation results
+    if (!validation.isValid) {
+      consistencyLogger.error('Health data validation failed', {
+        roundStartDate,
+        endDate,
+        errors: validation.errors
+      });
+    } else if (validation.warnings.length > 0) {
+      consistencyLogger.info('Health data validation warnings', {
+        roundStartDate,
+        endDate,
+        warnings: validation.warnings,
+        excludedCount: excluded.length
+      });
+    }
+    
+    return {
+      data: filtered,
+      excluded,
+      validation,
+      userMessage
+    };
+  }, [healthData]);
+
   return {
     healthData,
     loading,
@@ -701,5 +1002,11 @@ export const useHealthData = () => {
     getWeightProgress,
     getWeeklyAverageWeight,
     getWeeklyHealthMetrics,
+    // New round-aware functions
+    getWeeklyStepsByRoundWeek,
+    getWeightProgressForRound,
+    getRoundHealthMetrics,
+    getCurrentWeekHealthData,
+    getValidatedHealthDataForRound,
   };
 };

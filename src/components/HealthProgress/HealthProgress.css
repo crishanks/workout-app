@@ -176,6 +176,14 @@
   transition: opacity 0.3s ease;
 }
 
+.chart-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
 .chart-empty {
   display: flex;
   align-items: center;
@@ -207,6 +215,12 @@
 .tooltip-date {
   font-size: 0.75rem;
   color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.tooltip-absolute-date {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
   margin-bottom: 0.25rem;
 }
 
@@ -409,8 +423,15 @@
 .daily-breakdown h4 {
   font-size: 0.9rem;
   color: var(--text-secondary);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   font-weight: 600;
+}
+
+.week-dates {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.75rem;
+  margin-top: -0.25rem;
 }
 
 .daily-steps-list {

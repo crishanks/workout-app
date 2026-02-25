@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
-export const CurrentWeekSteps = memo(({ stepsData }) => {
-  if (!stepsData || stepsData.totalSteps === 0) {
+export const CurrentWeekSteps = memo(({ stepsData, weekNumber, weekBoundaries }) => {
+  if (!stepsData || stepsData.total === 0) {
     return (
       <div className="current-week-steps no-data" role="status" aria-live="polite">
         <p>No steps data for current week</p>
@@ -9,14 +9,30 @@ export const CurrentWeekSteps = memo(({ stepsData }) => {
     );
   }
 
-  const { totalSteps, goalMet, percentageOfGoal, dailySteps } = stepsData;
+  const { total: totalSteps, goalMet, percentageOfGoal, dailySteps } = stepsData;
   const goal = 60000;
   const remaining = Math.max(0, goal - totalSteps);
 
-  // Get day names for the week
-  const getDayName = (dateStr) => {
+  // Get day name and day number relative to week start
+  const getDayInfo = (dateStr) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+    
+    // Calculate day number within the round week (1-7)
+    if (weekBoundaries) {
+      const weekStart = new Date(weekBoundaries.startDate);
+      weekStart.setHours(0, 0, 0, 0);
+      const currentDate = new Date(date);
+      currentDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = currentDate - weekStart;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const dayNumber = diffDays + 1; // 1-indexed
+      
+      return { dayName, dayNumber };
+    }
+    
+    return { dayName, dayNumber: null };
   };
 
   // Sort daily steps by date
@@ -24,13 +40,13 @@ export const CurrentWeekSteps = memo(({ stepsData }) => {
     new Date(a.date) - new Date(b.date)
   );
 
-  const progressAriaLabel = `Weekly progress: ${totalSteps.toLocaleString()} out of ${goal.toLocaleString()} steps, ${percentageOfGoal}% complete. ${goalMet ? 'Goal achieved' : `${remaining.toLocaleString()} steps remaining`}`;
+  const progressAriaLabel = `Week ${weekNumber} progress: ${totalSteps.toLocaleString()} out of ${goal.toLocaleString()} steps, ${percentageOfGoal}% complete. ${goalMet ? 'Goal achieved' : `${remaining.toLocaleString()} steps remaining`}`;
 
   return (
     <div className="current-week-steps">
-      <div className="week-progress" role="region" aria-label="Weekly step progress">
+      <div className="week-progress" role="region" aria-label={`Week ${weekNumber} step progress`}>
         <div className="progress-header">
-          <span className="progress-label">Weekly Progress</span>
+          <span className="progress-label">Week {weekNumber} of 12</span>
           <span className="progress-value" aria-label={progressAriaLabel}>
             {totalSteps.toLocaleString()} / {goal.toLocaleString()} steps
           </span>
@@ -67,18 +83,28 @@ export const CurrentWeekSteps = memo(({ stepsData }) => {
 
       <div className="daily-breakdown" role="region" aria-label="Daily step breakdown">
         <h4>Daily Breakdown</h4>
+        {weekBoundaries && (
+          <p className="week-dates">
+            {new Date(weekBoundaries.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(weekBoundaries.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </p>
+        )}
         <div className="daily-steps-list" role="list">
-          {sortedDailySteps.map((day, index) => (
-            <div 
-              key={index} 
-              className="daily-step-item" 
-              role="listitem"
-              aria-label={`${getDayName(day.date)}: ${day.steps.toLocaleString()} steps`}
-            >
-              <span className="day-name">{getDayName(day.date)}</span>
-              <span className="day-steps">{day.steps.toLocaleString()}</span>
-            </div>
-          ))}
+          {sortedDailySteps.map((day, index) => {
+            const { dayName, dayNumber } = getDayInfo(day.date);
+            const dayLabel = dayNumber ? `Day ${dayNumber} (${dayName})` : dayName;
+            
+            return (
+              <div 
+                key={index} 
+                className="daily-step-item" 
+                role="listitem"
+                aria-label={`${dayLabel}: ${day.steps.toLocaleString()} steps`}
+              >
+                <span className="day-name">{dayLabel}</span>
+                <span className="day-steps">{day.steps.toLocaleString()}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
-export const useStats = (workoutHistory, healthData = [], roundStartDate = null) => {
+import { getRoundDateRange, getAllRoundWeeks } from '../utils/roundDateUtils';
+
+export const useStats = (workoutHistory, healthData = [], roundStartDate = null, roundEndDate = null) => {
   const calculateVolume = (exercise) => {
     let totalVolume = 0;
     Object.values(exercise.sets).forEach(set => {
@@ -10,15 +12,62 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
   };
 
   const getConsistencyScore = () => {
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-    
-    const recentSessions = workoutHistory.filter(s => 
-      new Date(s.date) >= fourWeeksAgo && s.exercises.length > 0
-    );
+    // If no round context, fall back to calendar-based calculation
+    if (!roundStartDate) {
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+      
+      const recentSessions = workoutHistory.filter(s => 
+        new Date(s.date) >= fourWeeksAgo && s.exercises.length > 0
+      );
 
-    const weeks = Math.ceil(recentSessions.length / 5);
-    const expectedWorkouts = weeks * 5;
+      const weeks = Math.ceil(recentSessions.length / 5);
+      const expectedWorkouts = weeks * 5;
+      const completedWorkouts = recentSessions.length;
+      
+      if (expectedWorkouts === 0) return 0;
+      
+      const rate = (completedWorkouts / expectedWorkouts) * 100;
+      return Math.min(100, rate);
+    }
+
+    // Round-based calculation: use last 4 round weeks
+    const allWeeks = getAllRoundWeeks(roundStartDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Find current week in round
+    let currentWeekIndex = 0;
+    for (let i = 0; i < allWeeks.length; i++) {
+      const weekStart = new Date(allWeeks[i].startDate);
+      const weekEnd = new Date(allWeeks[i].endDate);
+      if (today >= weekStart && today <= weekEnd) {
+        currentWeekIndex = i;
+        break;
+      } else if (today > weekEnd) {
+        currentWeekIndex = i;
+      }
+    }
+    
+    // Get last 4 weeks (or fewer if at start of round)
+    const startWeekIndex = Math.max(0, currentWeekIndex - 3);
+    const recentWeeks = allWeeks.slice(startWeekIndex, currentWeekIndex + 1);
+    
+    if (recentWeeks.length === 0) return 0;
+    
+    // Filter sessions within these weeks
+    const recentSessions = workoutHistory.filter(s => {
+      const sessionDate = new Date(s.date);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      return recentWeeks.some(week => {
+        const weekStart = new Date(week.startDate);
+        const weekEnd = new Date(week.endDate);
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
+      }) && s.exercises.length > 0;
+    });
+
+    const expectedWorkouts = recentWeeks.length * 5;
     const completedWorkouts = recentSessions.length;
     
     if (expectedWorkouts === 0) return 0;
@@ -30,15 +79,67 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
   const getProgressScore = () => {
     if (workoutHistory.length === 0) return 0;
     
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    // If no round context, fall back to calendar-based calculation
+    if (!roundStartDate) {
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+      
+      const oldSessions = workoutHistory.filter(s => 
+        new Date(s.date) < fourWeeksAgo && s.exercises.length > 0
+      );
+      const recentSessions = workoutHistory.filter(s => 
+        new Date(s.date) >= fourWeeksAgo && s.exercises.length > 0
+      );
+
+      // If no old sessions or no recent sessions, return default score
+      if (oldSessions.length === 0 || recentSessions.length === 0) return 70;
+
+      const oldVolume = oldSessions.reduce((sum, session) => 
+        sum + session.exercises.reduce((exSum, ex) => exSum + calculateVolume(ex), 0), 0
+      );
+      const recentVolume = recentSessions.reduce((sum, session) => 
+        sum + session.exercises.reduce((exSum, ex) => exSum + calculateVolume(ex), 0), 0
+      );
+
+      const avgOldVolume = oldVolume / oldSessions.length;
+      const avgRecentVolume = recentVolume / recentSessions.length;
+      
+      // Avoid division by zero
+      if (avgOldVolume === 0) return 70;
+      
+      if (avgRecentVolume > avgOldVolume * 1.05) return 100;
+      if (avgRecentVolume > avgOldVolume * 0.95) return 70;
+      return 40;
+    }
+
+    // Round-based calculation: compare first half vs second half of round
+    const allWeeks = getAllRoundWeeks(roundStartDate);
+    const midpoint = Math.floor(allWeeks.length / 2);
     
-    const oldSessions = workoutHistory.filter(s => 
-      new Date(s.date) < fourWeeksAgo && s.exercises.length > 0
-    );
-    const recentSessions = workoutHistory.filter(s => 
-      new Date(s.date) >= fourWeeksAgo && s.exercises.length > 0
-    );
+    const firstHalfWeeks = allWeeks.slice(0, midpoint);
+    const secondHalfWeeks = allWeeks.slice(midpoint);
+    
+    const oldSessions = workoutHistory.filter(s => {
+      const sessionDate = new Date(s.date);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      return firstHalfWeeks.some(week => {
+        const weekStart = new Date(week.startDate);
+        const weekEnd = new Date(week.endDate);
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
+      }) && s.exercises.length > 0;
+    });
+    
+    const recentSessions = workoutHistory.filter(s => {
+      const sessionDate = new Date(s.date);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      return secondHalfWeeks.some(week => {
+        const weekStart = new Date(week.startDate);
+        const weekEnd = new Date(week.endDate);
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
+      }) && s.exercises.length > 0;
+    });
 
     // If no old sessions or no recent sessions, return default score
     if (oldSessions.length === 0 || recentSessions.length === 0) return 70;
@@ -164,36 +265,70 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
     // Filter health data to only include entries from the current round
     let filteredHealthData = healthData;
     if (roundStartDate) {
-      const roundStart = new Date(roundStartDate);
+      const roundBoundaries = roundEndDate 
+        ? { startDate: new Date(roundStartDate), endDate: new Date(roundEndDate) }
+        : getRoundDateRange(roundStartDate);
+      
+      const roundStart = new Date(roundBoundaries.startDate);
       roundStart.setHours(0, 0, 0, 0);
+      const roundEnd = new Date(roundBoundaries.endDate);
+      roundEnd.setHours(23, 59, 59, 999);
       
       filteredHealthData = healthData.filter(entry => {
         const entryDate = new Date(entry.date);
         entryDate.setHours(0, 0, 0, 0);
-        return entryDate >= roundStart;
+        return entryDate >= roundStart && entryDate <= roundEnd;
       });
     }
 
     if (filteredHealthData.length === 0) return null;
 
-    // Group health data by week
+    // Group health data by round week
     const weeklySteps = {};
     
-    filteredHealthData.forEach(entry => {
-      if (!entry.steps) return;
+    if (roundStartDate) {
+      // Use round weeks
+      const allWeeks = getAllRoundWeeks(roundStartDate);
       
-      const entryDate = new Date(entry.date);
-      // Get Monday of the week
-      const dayOfWeek = entryDate.getDay();
-      const diff = entryDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      const monday = new Date(entryDate.setDate(diff));
-      const weekKey = monday.toISOString().split('T')[0];
-      
-      if (!weeklySteps[weekKey]) {
-        weeklySteps[weekKey] = 0;
-      }
-      weeklySteps[weekKey] += entry.steps;
-    });
+      filteredHealthData.forEach(entry => {
+        if (!entry.steps) return;
+        
+        const entryDate = new Date(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
+        
+        // Find which round week this entry belongs to
+        const week = allWeeks.find(w => {
+          const weekStart = new Date(w.startDate);
+          const weekEnd = new Date(w.endDate);
+          return entryDate >= weekStart && entryDate <= weekEnd;
+        });
+        
+        if (week) {
+          const weekKey = `week-${week.week}`;
+          if (!weeklySteps[weekKey]) {
+            weeklySteps[weekKey] = 0;
+          }
+          weeklySteps[weekKey] += entry.steps;
+        }
+      });
+    } else {
+      // Fall back to calendar weeks
+      filteredHealthData.forEach(entry => {
+        if (!entry.steps) return;
+        
+        const entryDate = new Date(entry.date);
+        // Get Monday of the week
+        const dayOfWeek = entryDate.getDay();
+        const diff = entryDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const monday = new Date(entryDate.setDate(diff));
+        const weekKey = monday.toISOString().split('T')[0];
+        
+        if (!weeklySteps[weekKey]) {
+          weeklySteps[weekKey] = 0;
+        }
+        weeklySteps[weekKey] += entry.steps;
+      });
+    }
 
     // Calculate achievement percentage for each week
     const weeklyAchievements = Object.values(weeklySteps).map(totalSteps => {
@@ -262,25 +397,61 @@ export const useStats = (workoutHistory, healthData = [], roundStartDate = null)
   };
 
   const getWeeklyConsistency = () => {
+    // If no round context, use existing round/week from workout data
+    if (!roundStartDate) {
+      const weeks = {};
+      
+      workoutHistory.forEach(session => {
+        if (session.exercises.length === 0) return;
+        
+        const weekKey = `${session.round || 1}-${((session.week - 1) % 12) + 1}`;
+        
+        if (!weeks[weekKey]) {
+          weeks[weekKey] = { count: 0, round: session.round || 1, week: ((session.week - 1) % 12) + 1 };
+        }
+        weeks[weekKey].count++;
+      });
+
+      return Object.entries(weeks)
+        .sort((a, b) => {
+          const [aRound, aWeek] = a[0].split('-').map(Number);
+          const [bRound, bWeek] = b[0].split('-').map(Number);
+          if (aRound !== bRound) return bRound - aRound;
+          return bWeek - aWeek;
+        })
+        .slice(0, 12);
+    }
+
+    // Round-based calculation: group by round weeks
+    const allWeeks = getAllRoundWeeks(roundStartDate);
     const weeks = {};
     
     workoutHistory.forEach(session => {
       if (session.exercises.length === 0) return;
       
-      const date = new Date(session.date);
-      const weekKey = `${session.round || 1}-${((session.week - 1) % 12) + 1}`;
+      const sessionDate = new Date(session.date);
+      sessionDate.setHours(0, 0, 0, 0);
       
-      if (!weeks[weekKey]) {
-        weeks[weekKey] = { count: 0, round: session.round || 1, week: ((session.week - 1) % 12) + 1 };
+      // Find which round week this session belongs to
+      const week = allWeeks.find(w => {
+        const weekStart = new Date(w.startDate);
+        const weekEnd = new Date(w.endDate);
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
+      });
+      
+      if (week) {
+        const weekKey = `week-${week.week}`;
+        if (!weeks[weekKey]) {
+          weeks[weekKey] = { count: 0, round: session.round || 1, week: week.week };
+        }
+        weeks[weekKey].count++;
       }
-      weeks[weekKey].count++;
     });
 
     return Object.entries(weeks)
       .sort((a, b) => {
-        const [aRound, aWeek] = a[0].split('-').map(Number);
-        const [bRound, bWeek] = b[0].split('-').map(Number);
-        if (aRound !== bRound) return bRound - aRound;
+        const aWeek = a[1].week;
+        const bWeek = b[1].week;
         return bWeek - aWeek;
       })
       .slice(0, 12);
